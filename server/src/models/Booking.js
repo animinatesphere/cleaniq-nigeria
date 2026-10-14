@@ -48,6 +48,7 @@ const bookingSchema = new mongoose.Schema(
       // How this booking is paid: now (Paystack), after the clean, on the weekly bill, or by a monthly plan.
       plan: { type: String, enum: ["payNow", "payAfter", "weekly", "subscription"], default: "payNow" },
       dueDate: String, // YYYY-MM-DD (Lagos) when payment is due, for pay-after / weekly
+      invoice: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice", default: null }, // pay-after / weekly bill
       status: { type: String, enum: PAYMENT_STATUSES, default: "Pending" },
       method: String, // Paystack
       channel: String, // card, bank_transfer, ussd…

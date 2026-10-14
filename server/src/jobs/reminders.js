@@ -1,9 +1,11 @@
 // Day-before reminders. Runs every 15 minutes; each booking gets one reminder (claimed atomically).
 const Booking = require("../models/Booking");
-const { lagosDate, addDays } = require("../lib/time");
+const { lagosDate, addDays, formatLagosDate, formatTime } = require("../lib/time");
+const { getSmsSettings, fill } = require("../lib/automations");
 
-async function sendDueReminders({ mailer, emails }, now = new Date()) {
+async function sendDueReminders({ mailer, emails, sms }, now = new Date()) {
   const tomorrow = addDays(lagosDate(now), 1);
+  const text = await getSmsSettings();
   let sent = 0;
   for (;;) {
     const b = await Booking.findOneAndUpdate(
@@ -13,6 +15,9 @@ async function sendDueReminders({ mailer, emails }, now = new Date()) {
     );
     if (!b) break;
     await mailer.send({ to: b.customer.email, ref: b.bookingId, ...emails.reminder(b) });
+    if (sms && text.enabled && text.dayBeforeReminder && b.customer.phone) {
+      await sms.send(b.customer.phone, fill(text.templates.reminder, { firstName: b.customer.firstName || "there", date: formatLagosDate(b.schedule.date), time: formatTime(b.schedule.time), ref: b.bookingId }));
+    }
     sent++;
   }
   return sent;

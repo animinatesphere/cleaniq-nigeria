@@ -8,7 +8,10 @@ const leadSchema = new mongoose.Schema(
     phone: String,
     area: String,
     source: { type: String, default: "website" }, // booking | quote | contact | whatsapp
-    stage: { type: String, enum: ["new", "quoted", "won", "lost"], default: "new" },
+    stage: { type: String, enum: ["new", "contacted", "quoted", "won", "lost"], default: "new" },
+    notes: [{ _id: false, text: String, by: String, at: { type: Date, default: Date.now } }],
+    followUpDate: String, // YYYY-MM-DD
+    value: Number, // ₦ estimated
     message: String,
     ref: String, // booking / quote reference
     meta: mongoose.Schema.Types.Mixed,

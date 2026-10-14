@@ -2,7 +2,7 @@
 const { loadConfig } = require("./config");
 const { connectDb } = require("./lib/db");
 const { createApp } = require("./app");
-const { sendDueReminders } = require("./jobs/reminders");
+const { runReminders, runBilling, runBlog } = require("./jobs/scheduled");
 
 async function main() {
   let config;
@@ -25,7 +25,9 @@ async function main() {
     setTimeout(run, 30 * 1000);
     setInterval(run, minutes * 60 * 1000);
   };
-  every(15, "reminders", () => sendDueReminders(ctx));
+  every(15, "reminders", () => runReminders(ctx));
+  every(60, "billing", () => runBilling(ctx)); // monthly plans, weekly bills, overdue reminders
+  every(10, "blog", () => runBlog(ctx)); // scheduled posts + autopilot
 }
 
 main().catch((e) => {

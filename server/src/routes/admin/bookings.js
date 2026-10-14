@@ -9,6 +9,7 @@ const { validateBookingInput } = require("../../lib/bookingValidation");
 const { createBooking, startPaystackCheckout, priceForm } = require("../../lib/bookingCreate");
 const { requestRefund } = require("../../lib/refunds");
 const { workerPayFor } = require("../../lib/workerPay");
+const { billPayAfterBooking } = require("../../lib/invoices");
 const { logAdmin } = require("../../lib/audit");
 const { moveToBin } = require("../../lib/bin");
 const { paging, searchFilter } = require("../../lib/query");
@@ -94,8 +95,9 @@ module.exports = function adminBookingRoutes(ctx) {
     }
     if (Object.keys(errors).length) throw badRequest("Please check the booking details", errors);
 
-    const payment = ["paystack", "offline", "later"].includes(req.body.payment) ? req.body.payment : "paystack";
+    const payment = ["paystack", "offline", "later", "payAfter", "weekly"].includes(req.body.payment) ? req.body.payment : "paystack";
     if (payment === "offline" && !["owner", "manager"].includes(req.admin.role)) throw new HttpError(403, "Only owners and managers can record offline payments");
+    if ((payment === "payAfter" || payment === "weekly") && !["owner", "manager"].includes(req.admin.role)) throw new HttpError(403, "Only owners and managers can confirm a clean that's paid later");
     const offline = payment === "offline" ? { method: clean(req.body.offlineMethod, 40) || "Bank transfer", note: clean(req.body.offlineNote, 200) } : undefined;
 
     const { booking, checkout } = await createBooking(ctx, { data, price, source: "admin", payment, offline, createdBy: req.admin.name, sendEmail: req.body.sendEmail !== false });
@@ -143,6 +145,8 @@ module.exports = function adminBookingRoutes(ctx) {
       // "Your clean is done" + receipt — only once.
       const claimed = await Booking.findOneAndUpdate({ _id: b._id, "emails.completedAt": null }, { $set: { "emails.completedAt": new Date() } });
       if (claimed) await mailer.send({ to: b.customer.email, ref: b.bookingId, ...emails.completed(b) });
+      // Pay after the clean: the invoice goes out now, due the next day.
+      await billPayAfterBooking(ctx, b).catch((e) => console.error(`[pay-after ${b.bookingId}]`, e.message));
     }
     await logAdmin(req, "booking.status", b.bookingId, { from, to: status });
     res.json({ booking: b });

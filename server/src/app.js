@@ -50,6 +50,7 @@ function createApp(config, deps = {}) {
   app.use("/api/payments", require("./routes/payments")(ctx));
   app.use("/api/quotes", require("./routes/quotes")(ctx));
   app.use("/api/applicants", require("./routes/applicants")(ctx));
+  app.use("/api", require("./routes/public")(ctx));
   app.use("/api/admin", require("./routes/admin")(ctx));
 
   app.use("/api", notFoundHandler);

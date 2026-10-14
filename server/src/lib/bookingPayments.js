@@ -3,13 +3,14 @@
 const Booking = require("../models/Booking");
 const Payment = require("../models/Payment");
 const { toKobo, fromKobo } = require("./money");
+const { confirmInvoicePayment } = require("./invoices");
 
 function createPaymentConfirmer({ mailer, emails, config }) {
   // tx = Paystack transaction data: { reference, amount (kobo), currency, channel, paid_at, customer }
   return async function confirmPayment(tx) {
     const reference = String(tx?.reference || "");
     const booking = reference ? await Booking.findOne({ "payment.reference": reference }) : null;
-    if (!booking) return { result: "unknown-reference" };
+    if (!booking) return confirmInvoicePayment(tx); // invoices / payment links / monthly plans
 
     if (Number(tx.amount) !== toKobo(booking.payment.amount) || String(tx.currency || "").toUpperCase() !== "NGN") {
       await Booking.updateOne({ _id: booking._id, "payment.status": "Pending" }, { $set: { "payment.problem": `Paystack reported ${tx.currency} ${fromKobo(tx.amount)} but the booking is NGN ${booking.payment.amount}` } });

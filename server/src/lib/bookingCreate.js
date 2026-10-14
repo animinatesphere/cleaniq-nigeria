@@ -55,6 +55,8 @@ async function createBooking(ctx, { data, price, source = "website", payment = "
   );
 
   const paidOffline = payment === "offline";
+  // Pay after the clean / weekly bill: confirmed now, invoiced when done (or on the weekly bill).
+  const billLater = payment === "payAfter" || payment === "weekly";
   const booking = await Booking.create({
     bookingId,
     customer: { firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone },
@@ -70,14 +72,15 @@ async function createBooking(ctx, { data, price, source = "website", payment = "
     price: { lines: price.lines, subtotal: price.subtotal, vat: price.vat, total: price.total },
     payment: {
       amount: price.total, currency: "NGN",
+      plan: billLater ? payment : "payNow",
       status: paidOffline ? "Paid" : "Pending",
-      method: paidOffline ? offline?.method || "Offline" : "Paystack",
+      method: paidOffline ? offline?.method || "Offline" : billLater ? "Invoice" : "Paystack",
       reference: checkout?.reference || (paidOffline ? `OFFLINE-${bookingId}` : undefined),
       authorizationUrl: checkout?.authorizationUrl,
       paidAt: paidOffline ? new Date() : undefined,
       offline: paidOffline ? { method: offline?.method || "Offline", note: offline?.note || "", by: createdBy } : undefined,
     },
-    status: paidOffline ? "Confirmed" : "Pending",
+    status: paidOffline || billLater ? "Confirmed" : "Pending",
     source,
     quoteRef: quote?.quoteRef,
     notes: createdBy ? [{ text: `Created by ${createdBy}`, by: createdBy }] : [],
@@ -87,11 +90,11 @@ async function createBooking(ctx, { data, price, source = "website", payment = "
     await Payment.create({ reference: booking.payment.reference, booking: booking._id, bookingId, amount: price.total, currency: "NGN", status: "success", channel: offline?.method || "offline", paidAt: new Date(), email: data.email });
   }
   if (source !== "quote") {
-    await Lead.create({ name: `${data.firstName} ${data.lastName}`, email: data.email, phone: data.phone, area: data.area, source: source === "admin" ? "admin" : "booking", stage: paidOffline ? "won" : "quoted", ref: bookingId }).catch(() => {});
+    await Lead.create({ name: `${data.firstName} ${data.lastName}`, email: data.email, phone: data.phone, area: data.area, source: source === "admin" ? "admin" : "booking", stage: paidOffline || billLater ? "won" : "quoted", ref: bookingId }).catch(() => {});
   }
 
   if (sendEmail) {
-    if (paidOffline) {
+    if (paidOffline || billLater) {
       await mailer.send({ to: data.email, ref: bookingId, ...emails.confirmed(booking) });
       await Booking.updateOne({ _id: booking._id }, { $set: { "emails.confirmedAt": new Date() } });
     } else if (checkout) {

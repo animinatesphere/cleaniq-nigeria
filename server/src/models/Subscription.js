@@ -6,6 +6,11 @@ const subscriptionSchema = new mongoose.Schema(
   {
     customer: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", required: true, index: true },
     customerName: String,
+    ref: { type: String, unique: true, sparse: true }, // e.g. PLAN-123456
+    customerEmail: { type: String, lowercase: true, trim: true },
+    customerPhone: String,
+    area: String,
+    address: String,
     service: String,
     plan: { cleans: Number, per: { type: String, enum: ["week", "month"] } }, // 2 per week
     monthlyPrice: { type: Number, required: true, min: 0 }, // ₦
