@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Cleaniq Nigeria brand colours — adjust once the design is agreed. */
+@theme {
+  --color-primary: #0f6b4c;
+  --color-primary-dark: #083d2e;
+  --color-mint: #6ee7b7;
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-white text-slate-900 antialiased; }
