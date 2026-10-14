@@ -10,7 +10,7 @@ const today = () => new Date(Date.now() + 3600 * 1000).toISOString().slice(0, 10
 
 const EMPTY = {
   firstName: "", lastName: "", email: "", phone: "", area: "", address: "", landmark: "",
-  service: "", frequency: "once", hours: "", supplies: "customer", propertyType: "", bedrooms: 1, bathrooms: 1, kitchens: 1, livingRooms: 1, stairs: 0,
+  service: "", supplies: "customer", propertyType: "", bedrooms: 1, bathrooms: 1, kitchens: 1, livingRooms: 1, stairs: 0,
   pets: false, parking: "", access: "", instructions: "", date: "", time: "09:00", extras: {}, payment: "paystack", offlineMethod: "Bank transfer", offlineNote: "", sendEmail: true,
 };
 
@@ -26,22 +26,16 @@ export default function NewBooking() {
   const [priceError, setPriceError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const base = (services.data?.base || []).filter((s) => s.type === "hourly");
-  const service = base.find((s) => s.slug === form.service);
+  const base = (services.data?.base || []).filter((s) => s.pricing === "size");
   const extras = useMemo(() => Object.entries(form.extras).filter(([, q]) => Number(q) > 0).map(([slug, qty]) => ({ slug, qty: Number(qty) })), [form.extras]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }));
 
+  const priceKey = JSON.stringify([form.service, form.propertyType, form.bedrooms, form.bathrooms, extras, form.supplies]);
   useEffect(() => {
-    if (service && !form.hours) setForm((f) => ({ ...f, hours: String(service.minHours) }));
-    if (service && !service.frequencies.some((x) => x.key === form.frequency)) setForm((f) => ({ ...f, frequency: "once" }));
-  }, [service, form.hours, form.frequency]);
-
-  const priceKey = JSON.stringify([form.service, form.frequency, form.hours, extras, form.supplies]);
-  useEffect(() => {
-    if (!form.service || !form.hours) return setPrice(null);
+    if (!form.service || !form.propertyType) return setPrice(null);
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      request("/admin/bookings/price", { method: "POST", signal: ctrl.signal, body: { service: form.service, frequency: form.frequency, hours: Number(form.hours), extras, supplies: form.supplies } })
+      request("/admin/bookings/price", { method: "POST", signal: ctrl.signal, body: { service: form.service, propertyType: form.propertyType, bedrooms: Number(form.bedrooms), bathrooms: Number(form.bathrooms), extras, supplies: form.supplies } })
         .then((p) => {
           setPrice(p);
           setPriceError("");
@@ -60,7 +54,7 @@ export default function NewBooking() {
     setBusy(true);
     setErrors({});
     try {
-      const body = { ...form, hours: Number(form.hours), extras, bedrooms: Number(form.bedrooms), bathrooms: Number(form.bathrooms), kitchens: Number(form.kitchens), livingRooms: Number(form.livingRooms), stairs: Number(form.stairs) };
+      const body = { ...form, extras, bedrooms: Number(form.bedrooms), bathrooms: Number(form.bathrooms), kitchens: Number(form.kitchens), livingRooms: Number(form.livingRooms), stairs: Number(form.stairs) };
       const r = await request("/admin/bookings", { method: "POST", body });
       toast(r.paymentLink ? "Booking created — payment link emailed" : "Booking created");
       navigate(`/admin/bookings/${r.booking.bookingId}`);
@@ -96,16 +90,15 @@ export default function NewBooking() {
               <Select id="area" label="Area" placeholder="Choose area" options={o.areas} value={form.area} onChange={set("area")} error={errors.area} />
               <Input id="address" label="Address" value={form.address} onChange={set("address")} error={errors.address} />
               <Input id="landmark" label="Landmark (optional)" value={form.landmark} onChange={set("landmark")} className="sm:col-span-2" />
-              <Select id="service" label="Service" placeholder="Choose service" options={base.map((s) => ({ value: s.slug, label: `${s.name} — ${naira(s.rate)}/hr` }))} value={form.service} onChange={set("service")} error={errors.service} />
-              <Select id="frequency" label="How often" options={(service?.frequencies || [{ key: "once", label: "One-off" }]).map((f) => ({ value: f.key, label: f.rate ? `${f.label} — ${naira(f.rate)}/hr` : f.label }))} value={form.frequency} onChange={set("frequency")} error={errors.frequency} />
-              <Input id="hours" type="number" step="0.5" min={service?.minHours || 1} max="12" label="Hours" value={form.hours} onChange={set("hours")} error={errors.hours} />
+              <Select id="service" label="Service" placeholder="Choose service" options={base.map((s) => ({ value: s.slug, label: s.fromPrice ? `${s.name} — from ${naira(s.fromPrice)}` : s.name }))} value={form.service} onChange={set("service")} error={errors.service} />
               <Select id="supplies" label="Supplies" options={[{ value: "customer", label: "Customer provides" }, { value: "cleaniq", label: `Cleaniq brings (+${naira(services.data.suppliesFee)})` }]} value={form.supplies} onChange={set("supplies")} error={errors.supplies} />
             </div>
           </Card>
           <Card>
-            <h2 className="mb-4 font-extrabold text-white">Property & access</h2>
+            <h2 className="mb-1 font-extrabold text-white">Property & access</h2>
+            <p className="mb-4 text-xs text-white/50">The price comes from the price list for this property type and number of bedrooms (0 = self-contain).</p>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Select id="propertyType" label="Property type" placeholder="—" options={o.propertyTypes} value={form.propertyType} onChange={set("propertyType")} />
+              <Select id="propertyType" label="Property type" placeholder="Choose" options={o.propertyTypes} value={form.propertyType} onChange={set("propertyType")} error={errors.propertyType} />
               {["bedrooms", "bathrooms", "kitchens", "livingRooms", "stairs"].map((k) => (
                 <Input key={k} id={k} type="number" min="0" max="20" label={{ livingRooms: "Living rooms" }[k] || k[0].toUpperCase() + k.slice(1)} value={form[k]} onChange={set(k)} error={errors[k]} />
               ))}
@@ -163,7 +156,7 @@ export default function NewBooking() {
                   <div key={l.key} className="flex justify-between gap-3">
                     <dt className="text-white/60">
                       {l.label}
-                      {l.qty > 1 && l.key !== "labour" ? ` × ${l.qty}` : ""}
+                      {l.qty > 1 ? ` × ${l.qty}` : ""}
                     </dt>
                     <dd className="text-white">{naira(l.amount)}</dd>
                   </div>
@@ -180,7 +173,7 @@ export default function NewBooking() {
                 </div>
               </dl>
             ) : (
-              <p className="text-sm text-white/50">Choose a service and hours.</p>
+              <p className="text-sm text-white/50">Choose a service and the property type.</p>
             )}
             <Button type="submit" loading={busy} className="mt-5 w-full py-3" disabled={!price}>
               Create booking

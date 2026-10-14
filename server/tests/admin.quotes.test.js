@@ -22,7 +22,7 @@ beforeEach(async () => {
 
 const quoteBody = (over = {}) => ({
   firstName: "Femi", lastName: "Ola", email: "femi@example.com", phone: "0805 555 6666", area: "Lekki Phase 2", address: "7 Chevron Drive",
-  supplies: "cleaniq", items: [{ serviceSlug: "deep-cleaning", qty: 5, extras: [{ slug: "extra-inside-fridge", qty: 1 }] }, { serviceSlug: "oven-cleaning", qty: 1, option: "Double oven" }],
+  supplies: "cleaniq", items: [{ serviceSlug: "deep-cleaning", propertyType: "Duplex", bedrooms: 3, bathrooms: 3, extras: [{ slug: "extra-inside-fridge", qty: 1 }] }, { serviceSlug: "oven-cleaning", qty: 1, option: "Double oven" }],
   ...over,
 });
 const tokenFromEmail = () => t.outbox.find((m) => m.type === "quote").html.match(/\/quote\/(Q-NG-\d{6})\?t=([a-f0-9]{32})/);
@@ -31,9 +31,10 @@ test("quote builder: priced from the price list, emailed with an Accept link, 30
   const r = await t.api("POST", "/api/admin/quotes", { token: staff, body: quoteBody() });
   assert.equal(r.status, 201, JSON.stringify(r.body));
   const q = r.body.quote;
-  // deep 7000×5 + fridge 7500 = 42500; double oven 22000; supplies 5000
-  assert.equal(q.subtotal, 69500);
-  assert.equal(q.grandTotal, 69500);
+  // 3-bed duplex deep clean 67500 + fridge 7500 = 75000; double oven 22000; supplies 5000 (one visit)
+  assert.equal(q.subtotal, 102000);
+  assert.equal(q.grandTotal, 102000);
+  assert.equal(q.items[0].size, "3-bed Duplex");
   assert.equal(q.status, "Sent");
   assert.equal(q.token, undefined, "secret token is never returned");
   const days = (new Date(q.validUntil) - Date.now()) / 86400000;
@@ -42,17 +43,32 @@ test("quote builder: priced from the price list, emailed with an Accept link, 30
   assert.equal(m[1], q.quoteRef);
 });
 
-test("quote builder: staff can't override prices or discount; managers can; VAT added", async () => {
+test("quote builder: staff can't override list prices or discount; managers can; VAT added", async () => {
   await setSetting("vat", { enabled: true, rate: 7.5 });
-  const body = quoteBody({ items: [{ serviceSlug: "regular-cleaning", qty: 2, unitPrice: 1 }], supplies: "customer", discount: 1000 });
+  const line = { serviceSlug: "regular-cleaning", propertyType: "Flat", bedrooms: 2, bathrooms: 2, qty: 4 };
+  const body = { items: [{ ...line, unitPrice: 1 }], supplies: "customer", discount: 1000 };
   let r = await t.api("POST", "/api/admin/quotes/price", { token: staff, body });
-  assert.equal(r.body.subtotal, 10000);
+  assert.equal(r.body.subtotal, 80000, "4 cleans of a 2-bed flat at the list price");
   assert.equal(r.body.discount, 0);
-  r = await t.api("POST", "/api/admin/quotes/price", { token: manager, body: { ...body, items: [{ serviceSlug: "regular-cleaning", qty: 2, unitPrice: 4000 }] } });
-  assert.equal(r.body.subtotal, 8000);
+  r = await t.api("POST", "/api/admin/quotes/price", { token: manager, body: { ...body, items: [{ ...line, unitPrice: 18000 }] } });
+  assert.equal(r.body.subtotal, 72000);
   assert.equal(r.body.discount, 1000);
-  assert.equal(r.body.vat.amount, 525);
-  assert.equal(r.body.grandTotal, 7525);
+  assert.equal(r.body.vat.amount, 5325);
+  assert.equal(r.body.grandTotal, 76325);
+});
+
+test("quote builder: post-construction and custom lines are priced by whoever quotes", async () => {
+  const items = [{ serviceSlug: "post-construction-cleaning", unitPrice: 250000 }, { label: "Remove builders' rubble <b>bags</b>", unitPrice: 15000, qty: 2 }];
+  let r = await t.api("POST", "/api/admin/quotes/price", { token: staff, body: { items, supplies: "customer" } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.grandTotal, 280000);
+  assert.equal(r.body.items[1].service, "Remove builders' rubble bags");
+  r = await t.api("POST", "/api/admin/quotes/price", { token: staff, body: { items: [{ serviceSlug: "post-construction-cleaning" }] } });
+  assert.equal(r.status, 400, "needs a price");
+  r = await t.api("POST", "/api/admin/quotes/price", { token: staff, body: { items: [{ serviceSlug: "deep-cleaning", propertyType: "Office", bedrooms: 0 }] } });
+  assert.equal(r.status, 400, "not in the table and no price given");
+  r = await t.api("POST", "/api/admin/quotes/price", { token: staff, body: { items: [{ serviceSlug: "deep-cleaning", propertyType: "Office", bedrooms: 0, unitPrice: 90000 }] } });
+  assert.equal(r.body.items[0].kind, "quote");
 });
 
 test("quote builder: clear errors for bad items", async () => {
@@ -81,11 +97,12 @@ test("accept: picks date/time → Pending booking for the quote total + Paystack
   assert.equal(r.status, 201, JSON.stringify(r.body));
   assert.match(r.body.authorizationUrl, /checkout\.paystack\.test/);
   const b = await Booking.findOne({ bookingId: r.body.bookingId }).lean();
-  assert.equal(b.payment.amount, 69500);
+  assert.equal(b.payment.amount, 102000);
+  assert.equal(b.details.size, "3-bed Duplex");
   assert.equal(b.status, "Pending");
   assert.equal(b.source, "quote");
   assert.equal(b.quoteRef, ref);
-  assert.equal(paystack.calls.find((c) => c.name === "initialize").args.amountKobo, 6950000);
+  assert.equal(paystack.calls.find((c) => c.name === "initialize").args.amountKobo, 10200000);
   const q = await Quote.findOne({ quoteRef: ref }).lean();
   assert.equal(q.status, "Accepted");
   assert.equal(q.followUpsStopped, true);

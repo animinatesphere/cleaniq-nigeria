@@ -19,6 +19,7 @@ const Customers = page(() => import("./pages/Customers"));
 const CustomerProfile = page(() => import("./pages/CustomerProfile"));
 const Staff = page(() => import("./pages/Staff"));
 const Applicants = page(() => import("./pages/Applicants"));
+const PriceList = page(() => import("./pages/PriceList"));
 const ComingNext = page(() => import("./pages/ComingNext"));
 
 function Gate() {
@@ -39,6 +40,7 @@ function Gate() {
           <Route path="customers/:id" element={<CustomerProfile />} />
           <Route path="staff" element={<Staff />} />
           <Route path="applicants" element={<Applicants />} />
+          <Route path="price-list" element={<PriceList />} />
           <Route path="account/password" element={<ChangePassword />} />
           <Route path="*" element={<ComingNext />} />
         </Route>

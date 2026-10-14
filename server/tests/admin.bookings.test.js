@@ -25,7 +25,7 @@ beforeEach(async () => {
 });
 
 const form = (over = {}) => ({
-  area: "Ikoyi", address: "4 Bourdillon Road", service: "regular-cleaning", hours: 3, supplies: "customer",
+  area: "Ikoyi", address: "4 Bourdillon Road", service: "regular-cleaning", propertyType: "Flat", supplies: "customer",
   bedrooms: 2, bathrooms: 1, kitchens: 1, livingRooms: 1, date: addDays(lagosDate(), 2), time: "09:00",
   firstName: "Tunde", lastName: "Bello", email: "tunde@example.com", phone: "08091234567", ...over,
 });
@@ -42,13 +42,13 @@ async function paystackPaidBooking() {
   return Booking.findOne({ bookingId: r.body.bookingId }).lean();
 }
 async function worker(email = "chidi@cleaniq.test") {
-  return Worker.create({ firstName: "Chidi", lastName: "Okafor", email, passwordHash: await bcrypt.hash("x-password-123", 4) });
+  return Worker.create({ firstName: "Chidi", lastName: "Okafor", email, passwordHash: await bcrypt.hash("x-password-123", 4), pay: { type: "perJob", perJobRate: 6000 } });
 }
 
 test("new booking by staff: Paystack link emailed; price from the price list", async () => {
   const r = await t.api("POST", "/api/admin/bookings", { token: staff, body: { ...form(), payment: "paystack", total: 1 } });
   assert.equal(r.status, 201, JSON.stringify(r.body));
-  assert.equal(r.body.booking.payment.amount, 15000);
+  assert.equal(r.body.booking.payment.amount, 20000, "2-bed flat regular clean");
   assert.equal(r.body.booking.status, "Pending");
   assert.match(r.body.paymentLink, /checkout\.paystack\.test/);
   assert.equal(r.body.booking.source, "admin");
@@ -102,7 +102,7 @@ test("status: assign, start, complete → worker pay + one 'done' email with rec
   assert.equal(r.status, 200);
   const done = await Booking.findOne({ bookingId: b.bookingId }).lean();
   assert.equal(done.workerPay.status, "unpaid");
-  assert.equal(done.workerPay.amount, 2500 * 3, "regular clean: ₦2,500/hr × 3 hours");
+  assert.equal(done.workerPay.amount, 6000, "cleaner's per-job rate");
   assert.equal(t.outbox.filter((m) => m.type === "booking-completed").length, 1);
   r = await t.api("PATCH", `/api/admin/bookings/${b.bookingId}/status`, { token: staff, body: { status: "Confirmed" } });
   assert.equal(r.status, 400, "completed bookings can't go back");
@@ -243,7 +243,7 @@ test("dashboard: today's jobs and revenue (Lagos day)", async () => {
   const r = await t.api("GET", "/api/admin/dashboard", { token: staff });
   assert.equal(r.status, 200);
   assert.equal(r.body.todaysJobs.length, 1);
-  assert.equal(r.body.revenueToday.total, 30000);
+  assert.equal(r.body.revenueToday.total, 40000);
   assert.equal(r.body.revenueToday.count, 2);
   assert.equal(r.body.awaitingPayment, 1);
   assert.equal(r.body.unassigned, 2);

@@ -14,7 +14,7 @@ const { isValidTime } = require("../../lib/time");
 const { LAGOS_AREAS } = require("../../lib/lagos");
 const { badRequest, notFound, HttpError } = require("../../middleware/errors");
 
-const FIELDS = "firstName lastName email phone areas availability status notes bank lastLoginAt lastActiveAt createdAt";
+const FIELDS = "firstName lastName email phone areas availability status notes pay bank lastLoginAt lastActiveAt createdAt";
 
 // Staff (non-managers) see only the last 4 digits of bank accounts.
 function present(w, role) {
@@ -55,6 +55,14 @@ function workerInput(body, { partial = false } = {}) {
     else data.availability = body.availability.map(({ day, from, to }) => ({ day, from, to }));
   }
   if (body.notes !== undefined) data.notes = clean(body.notes, 2000);
+  if (body.pay !== undefined) {
+    const p = body.pay || {};
+    const salary = Number(p.monthlySalary || 0);
+    const perJob = Number(p.perJobRate || 0);
+    if (!["salary", "perJob"].includes(p.type)) errors.pay = "Choose monthly salary or pay per job";
+    else if (!(salary >= 0 && salary <= 50_000_000) || !(perJob >= 0 && perJob <= 10_000_000)) errors.pay = "Enter pay in naira";
+    else data.pay = { type: p.type, monthlySalary: Math.round(salary * 100) / 100, perJobRate: Math.round(perJob * 100) / 100 };
+  }
   return { data, errors };
 }
 

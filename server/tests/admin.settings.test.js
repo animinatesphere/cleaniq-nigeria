@@ -17,29 +17,41 @@ beforeEach(async () => {
   staff = await t.adminToken("staff");
 });
 
-test("price list: managers edit; the public list and prices follow; changes are logged", async () => {
+test("price list: managers edit the per-clean table; public prices follow; changes are logged", async () => {
   const list = await t.api("GET", "/api/admin/services", { token: staff });
   const regular = list.body.items.find((s) => s.slug === "regular-cleaning");
-  assert.ok("workerHourlyRate" in regular, "admin sees cleaner pay");
-  let r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: manager, body: { rate: 5500, weeklyRate: "", monthlyRate: 5000 } });
-  assert.equal(r.body.service.rate, 5500);
-  assert.equal(r.body.service.weeklyRate, null);
-  const pub = await t.api("GET", "/api/services");
-  const freq = pub.body.base.find((s) => s.slug === "regular-cleaning").frequencies.map((f) => f.key);
-  assert.deepEqual(freq, ["once", "fortnightly", "monthly"]);
-  const price = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", hours: 2, supplies: "customer" } });
-  assert.equal(price.body.total, 11000);
+  const table = regular.sizePrices.map((c) => (c.propertyType === "Flat" && c.bedrooms === 2 ? { ...c, price: 22000 } : c)).filter((c) => !(c.propertyType === "Flat" && c.bedrooms === 0));
+  let r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: manager, body: { sizePrices: table, extraBathroomPrice: 3500 } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const price = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", propertyType: "Flat", bedrooms: 2, bathrooms: 3, supplies: "customer" } });
+  assert.equal(price.body.total, 22000 + 3500);
+  const gone = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", propertyType: "Flat", bedrooms: 0, bathrooms: 1, supplies: "customer" } });
+  assert.equal(gone.body.details.needsQuote, true, "emptied cell → quote");
   const audit = await t.api("GET", "/api/admin/audit?q=service.update", { token: owner });
-  assert.equal(audit.body.items[0].details.rate.to, 5500);
-  r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: manager, body: { rate: -5 } });
+  assert.deepEqual(audit.body.items[0].details.sizePrices["2-bed Flat"], { from: 20000, to: 22000 });
+  assert.deepEqual(audit.body.items[0].details.sizePrices["0-bed Flat"], { from: 10000, to: null });
+  r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: manager, body: { sizePrices: [{ propertyType: "Castle", bedrooms: 2, price: 1 }] } });
   assert.equal(r.status, 400);
+  r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: manager, body: { sizePrices: [{ propertyType: "Flat", bedrooms: 2, price: -1 }] } });
+  assert.equal(r.status, 400);
+  r = await t.api("PATCH", `/api/admin/services/${regular._id}`, { token: staff, body: { extraBathroomPrice: 1 } });
+  assert.equal(r.status, 403);
+});
+
+test("price list: a main service can switch to 'priced by quote'", async () => {
+  const list = await t.api("GET", "/api/admin/services", { token: staff });
+  const deep = list.body.items.find((s) => s.slug === "deep-cleaning");
+  await t.api("PATCH", `/api/admin/services/${deep._id}`, { token: manager, body: { pricing: "quote" } });
+  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "deep-cleaning", propertyType: "Flat", bedrooms: 2, bathrooms: 1, supplies: "customer" } });
+  assert.equal(r.status, 400);
+  assert.match(r.body.details.service, /quote/);
 });
 
 test("price list: add an add-on with options; delete → Bin; inactive hidden from public", async () => {
-  let r = await t.api("POST", "/api/admin/services", { token: manager, body: { name: "Mattress cleaning", category: "Extras", type: "flat", rate: 9000, unitLabel: "mattress" } });
+  let r = await t.api("POST", "/api/admin/services", { token: manager, body: { name: "Mattress cleaning", category: "Extras", rate: 9000, unitLabel: "mattress" } });
   assert.equal(r.status, 201);
   assert.equal(r.body.service.slug, "extra-mattress-cleaning");
-  assert.equal((await t.api("POST", "/api/admin/services", { token: manager, body: { name: "Mattress cleaning", category: "Extras", type: "flat", rate: 9000 } })).status, 409);
+  assert.equal((await t.api("POST", "/api/admin/services", { token: manager, body: { name: "Mattress cleaning", category: "Extras", rate: 9000 } })).status, 409);
   await t.api("PATCH", `/api/admin/services/${r.body.service._id}`, { token: manager, body: { active: false } });
   assert.ok(!(await t.api("GET", "/api/services")).body.extras.some((x) => x.slug === "extra-mattress-cleaning"));
   assert.equal((await t.api("DELETE", `/api/admin/services/${r.body.service._id}`, { token: manager })).status, 200);
@@ -49,9 +61,9 @@ test("price list: add an add-on with options; delete → Bin; inactive hidden fr
 test("settings: VAT switch and supplies fee change live prices; business details validated", async () => {
   let r = await t.api("PUT", "/api/admin/settings/pricing", { token: manager, body: { vat: { enabled: true, rate: 7.5 }, suppliesFee: 3000 } });
   assert.equal(r.status, 200);
-  const price = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", hours: 2, supplies: "cleaniq" } });
-  assert.equal(price.body.subtotal, 13000);
-  assert.equal(price.body.total, 13975);
+  const price = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", propertyType: "Flat", bedrooms: 1, bathrooms: 1, supplies: "cleaniq" } });
+  assert.equal(price.body.subtotal, 18000);
+  assert.equal(price.body.total, 19350);
   r = await t.api("PUT", "/api/admin/settings/business", { token: manager, body: { name: "Cleaniq Nigeria", whatsapp: "0803 111 2222", email: "nope" } });
   assert.equal(r.status, 400);
   r = await t.api("PUT", "/api/admin/settings/business", { token: manager, body: { name: "Cleaniq Nigeria", whatsapp: "0803 111 2222", email: "hello@cleaniq.ng" } });

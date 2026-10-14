@@ -19,7 +19,7 @@ const { TIME_SLOTS } = require("../../lib/lagos");
 const { badRequest, notFound, HttpError } = require("../../middleware/errors");
 const { STATUSES } = require("../../models/Booking");
 
-const LIST_FIELDS = "bookingId customer service schedule details.area details.duration status payment.status payment.amount assignedWorker assignedWorkerName source createdAt job.hidden";
+const LIST_FIELDS = "bookingId customer service schedule details.area details.size details.estHours status payment.status payment.amount assignedWorker assignedWorkerName source createdAt job.hidden";
 
 // Allowed status changes from the admin (cancel has its own route, with refund options).
 const NEXT = {
@@ -67,7 +67,7 @@ module.exports = function adminBookingRoutes(ctx) {
     if ((new Date(to) - new Date(from)) / 86400000 > 62) throw badRequest("Date range is too long");
     const items = await Booking.find({ "schedule.date": { $gte: from, $lte: to }, status: { $ne: "Cancelled" } })
       .sort({ "schedule.date": 1, "schedule.time": 1 })
-      .select("bookingId customer.firstName customer.lastName service schedule details.area details.duration status assignedWorker assignedWorkerName payment.status")
+      .select("bookingId customer.firstName customer.lastName service schedule details.area details.size details.estHours status assignedWorker assignedWorkerName payment.status")
       .lean();
     res.json({ items });
   });

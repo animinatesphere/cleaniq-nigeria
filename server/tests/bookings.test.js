@@ -38,7 +38,7 @@ beforeEach(async () => {
 const tomorrow = () => addDays(lagosDate(), 1);
 const form = (over = {}) => ({
   area: "Lekki Phase 1", address: "12 Admiralty Way", landmark: "Opposite the filling station",
-  service: "deep-cleaning", frequency: "once", hours: 4,
+  service: "deep-cleaning",
   propertyType: "Flat", bedrooms: 2, bathrooms: 2, kitchens: 1, livingRooms: 1, stairs: 0, pets: false,
   extras: [{ slug: "extra-inside-oven", qty: 1 }], supplies: "cleaniq",
   parking: "Parking inside the compound", access: "Someone will be home", instructions: "Gate code <b>1234</b>",
@@ -68,35 +68,44 @@ test("options: Lagos areas, time slots 8am–6pm, dates from tomorrow (Lagos)", 
 });
 
 test("quote-price returns the server's total", async () => {
-  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "deep-cleaning", hours: 4, supplies: "cleaniq", extras: [{ slug: "extra-inside-oven", qty: 1 }] } });
+  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "deep-cleaning", propertyType: "Flat", bedrooms: 2, bathrooms: 2, supplies: "cleaniq", extras: [{ slug: "extra-inside-oven", qty: 1 }] } });
   assert.equal(r.status, 200);
-  assert.equal(r.body.total, 28000 + 10000 + 5000);
+  assert.equal(r.body.total, 40000 + 10000 + 5000);
+  assert.equal(r.body.size, "2-bed Flat");
 });
 
 test("quote-price adds VAT when switched on", async () => {
   await setSetting("vat", { enabled: true, rate: 7.5 });
-  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", hours: 2, supplies: "customer" } });
-  assert.equal(r.body.subtotal, 10000);
-  assert.equal(r.body.vat.amount, 750);
-  assert.equal(r.body.total, 10750);
+  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "regular-cleaning", propertyType: "Flat", bedrooms: 1, bathrooms: 1, supplies: "customer" } });
+  assert.equal(r.body.subtotal, 15000);
+  assert.equal(r.body.vat.amount, 1125);
+  assert.equal(r.body.total, 16125);
+});
+
+test("quote-price: a property that isn't in the price table asks for a quote", async () => {
+  const r = await t.api("POST", "/api/bookings/quote-price", { body: { service: "deep-cleaning", propertyType: "Office", bedrooms: 0, bathrooms: 2, supplies: "customer" } });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.details.needsQuote, true);
 });
 
 test("create booking: Pending, server price in kobo, Paystack link, customer + lead + email", async () => {
   const r = await t.api("POST", "/api/bookings", { body: { ...form(), total: 1, amount: 1, status: "Confirmed", payment: { status: "Paid" } } });
   assert.equal(r.status, 201, JSON.stringify(r.body));
   assert.match(r.body.bookingId, /^NG-\d{6}$/);
-  assert.equal(r.body.total, 43000, "browser-sent amount is ignored");
+  assert.equal(r.body.total, 55000, "browser-sent amount is ignored");
   assert.ok(r.body.authorizationUrl.startsWith("https://checkout.paystack.test/"));
 
   const init = paystack.initialized[0];
-  assert.equal(init.amountKobo, 4300000);
+  assert.equal(init.amountKobo, 5500000);
   assert.equal(init.email, "ada@example.com");
   assert.match(init.callbackUrl, /\/payment\/success\?booking=NG-\d{6}&reference=/);
 
   const b = await Booking.findOne({ bookingId: r.body.bookingId }).lean();
   assert.equal(b.status, "Pending", "browser can't confirm a booking");
   assert.equal(b.payment.status, "Pending");
-  assert.equal(b.payment.amount, 43000);
+  assert.equal(b.payment.amount, 55000);
+  assert.equal(b.details.size, "2-bed Flat");
+  assert.equal(b.details.estHours, 6);
   assert.equal(b.customer.phone, "+2348031234567");
   assert.equal(b.details.instructions, "Gate code 1234", "HTML stripped");
   assert.equal(b.details.rooms.bedrooms, 2);

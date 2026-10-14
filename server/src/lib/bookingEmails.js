@@ -3,7 +3,6 @@ const { layout, detailsTable } = require("./email");
 const { formatNaira } = require("./money");
 const { formatLagosDate, formatTime } = require("./time");
 const { escapeHtml } = require("./text");
-const { FREQUENCIES } = require("./pricing");
 
 function summaryRows(b) {
   const r = b.details?.rooms || {};
@@ -15,8 +14,8 @@ function summaryRows(b) {
   ].filter(Boolean).join(", ");
   return [
     ["Booking reference", b.bookingId],
-    ["Service", `${b.service}${b.details?.duration ? ` · ${b.details.duration} hours` : ""}`],
-    ["How often", FREQUENCIES[b.details?.frequency]?.label],
+    ["Service", `${b.service}${b.details?.size ? ` · ${b.details.size}` : ""}`],
+    ["Estimated time", b.details?.estHours ? `About ${b.details.estHours} hours` : ""],
     ["Date", formatLagosDate(b.schedule?.date)],
     ["Arrival time", formatTime(b.schedule?.time)],
     ["Address", [b.details?.address, b.details?.area].filter(Boolean).join(", ")],
@@ -26,7 +25,7 @@ function summaryRows(b) {
 }
 
 function priceTable(b) {
-  const rows = (b.price?.lines || []).map((l) => [`${l.label}${l.qty > 1 && !l.key?.startsWith("labour") ? ` × ${l.qty}` : ""}`, formatNaira(l.amount)]);
+  const rows = (b.price?.lines || []).map((l) => [`${l.label}${l.qty > 1 ? ` × ${l.qty}` : ""}`, formatNaira(l.amount)]);
   if (b.price?.vat?.enabled) rows.push([`${b.price.vat.label} (${b.price.vat.rate}%)`, formatNaira(b.price.vat.amount)]);
   rows.push(["Total", formatNaira(b.price?.total ?? b.payment?.amount)]);
   return detailsTable(rows);

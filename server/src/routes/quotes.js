@@ -54,14 +54,18 @@ module.exports = function quoteRoutes(ctx) {
     const claimed = await Quote.findOneAndUpdate({ _id: q._id, status: "Sent" }, { $set: { status: "Accepted", acceptedAt: new Date(), followUpsStopped: true, serviceDate: date, serviceTime: time } }, { new: true });
     if (!claimed) throw badRequest("This quote has already been accepted");
 
-    const hourly = q.items.filter((i) => i.billingType === "hourly");
     const main = q.items.find((i) => i.serviceSlug !== "supplies") || q.items[0];
-    const lines = q.items.map((i) => ({ key: `quote:${i.serviceSlug}`, label: `${i.service}${i.option ? ` (${i.option})` : ""}${i.billingType === "hourly" ? ` — ${i.qty} hours` : ""}`, qty: i.billingType === "hourly" ? 1 : i.qty, unitPrice: i.billingType === "hourly" ? i.subtotal : i.unitPrice, amount: i.subtotal }));
+    const lines = q.items.map((i, n) => ({
+      key: `quote:${n}:${i.serviceSlug || "custom"}`,
+      label: `${i.service}${i.size ? ` — ${i.size}` : ""}${i.option ? ` (${i.option})` : ""}`,
+      qty: i.qty, unitPrice: i.unitPrice, amount: i.subtotal,
+    }));
     if (q.discount?.amount) lines.push({ key: "discount", label: q.discount.label || "Discount", qty: 1, unitPrice: -q.discount.amount, amount: -q.discount.amount });
+    const estHours = q.items.reduce((s, i) => s + (i.estHours || 0) * (i.qty || 1), 0);
     const price = {
       service: { name: q.items.length > 1 ? `${main.service} + more` : main.service, slug: main.serviceSlug },
-      hours: hourly.reduce((s, i) => s + i.qty, 0) || undefined,
-      frequency: { key: q.details?.frequency || "once" },
+      size: main.size || undefined,
+      estHours: estHours || undefined,
       extras: q.items.flatMap((i) => i.extras || []),
       supplies: q.details?.supplies,
       lines, subtotal: q.subtotal, vat: q.vat, total: q.grandTotal,

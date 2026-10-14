@@ -21,8 +21,8 @@ const bookingSchema = new mongoose.Schema(
       area: String, // Lagos area
       address: String,
       landmark: String,
-      duration: Number, // hours
-      frequency: String, // once | weekly | fortnightly | monthly
+      size: String, // e.g. "3-bed Duplex" — what the price is based on
+      estHours: Number, // estimated cleaning time, for scheduling only (never in the price)
       propertyType: String,
       rooms: { bedrooms: Number, bathrooms: Number, kitchens: Number, livingRooms: Number, stairs: Number },
       extras: [{ _id: false, slug: String, name: String, qty: Number, unitPrice: Number }],

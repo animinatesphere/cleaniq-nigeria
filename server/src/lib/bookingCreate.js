@@ -14,7 +14,8 @@ const { getPricingSettings } = require("./settings");
 async function priceForm(body) {
   const [services, settings] = await Promise.all([Service.find({ active: true }).lean(), getPricingSettings()]);
   return priceBooking(services, settings, {
-    service: body?.service, frequency: body?.frequency, hours: body?.hours, extras: body?.extras, supplies: body?.supplies,
+    service: body?.service, propertyType: body?.propertyType, bedrooms: body?.bedrooms, bathrooms: body?.bathrooms,
+    extras: body?.extras, supplies: body?.supplies,
   });
 }
 
@@ -61,7 +62,7 @@ async function createBooking(ctx, { data, price, source = "website", payment = "
     service: price.service.name,
     serviceSlug: price.service.slug,
     details: {
-      area: data.area, address: data.address, landmark: data.landmark, duration: price.hours, frequency: price.frequency?.key || "once",
+      area: data.area, address: data.address, landmark: data.landmark, size: price.size, estHours: price.estHours ?? undefined,
       propertyType: data.propertyType, rooms: data.rooms, extras: price.extras || [], pets: data.pets, supplies: price.supplies,
       parking: data.parking, access: data.access, instructions: data.instructions,
     },

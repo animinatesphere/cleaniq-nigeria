@@ -4,10 +4,12 @@ const STATUSES = ["Sent", "Accepted", "Declined", "Expired"];
 
 const itemSchema = new mongoose.Schema(
   {
-    service: String, // name
+    service: String, // name or custom line text
     serviceSlug: String,
-    billingType: { type: String, enum: ["hourly", "flat"] },
-    qty: Number, // hours (hourly) or count (flat)
+    kind: { type: String, enum: ["size", "fixed", "quote", "custom"] },
+    size: String, // e.g. "3-bed Duplex" (price-list cleans)
+    estHours: Number, // scheduling only
+    qty: Number, // number of cleans / items
     unitPrice: Number,
     option: String, // e.g. "Double oven"
     extras: [{ _id: false, slug: String, name: String, qty: Number, unitPrice: Number }],
@@ -24,7 +26,7 @@ const quoteSchema = new mongoose.Schema(
     details: {
       area: String, address: String, landmark: String, propertyType: String,
       rooms: { bedrooms: Number, bathrooms: Number, kitchens: Number, livingRooms: Number, stairs: Number },
-      pets: Boolean, supplies: String, frequency: String, notes: String,
+      pets: Boolean, supplies: String, notes: String,
     },
     items: [itemSchema],
     subtotal: Number,

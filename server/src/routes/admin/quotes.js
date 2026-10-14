@@ -7,7 +7,7 @@ const { getPricingSettings } = require("../../lib/settings");
 const { clean, normaliseEmail, isEmail, normaliseNgPhone } = require("../../lib/text");
 const { isValidDate, isValidTime } = require("../../lib/time");
 const { LAGOS_AREAS, PROPERTY_TYPES } = require("../../lib/lagos");
-const { FREQUENCIES, SUPPLIES } = require("../../lib/pricing");
+const { SUPPLIES } = require("../../lib/pricing");
 const { paging, searchFilter } = require("../../lib/query");
 const { logAdmin } = require("../../lib/audit");
 const { moveToBin } = require("../../lib/bin");
@@ -31,7 +31,6 @@ function quoteCustomerInput(b) {
     rooms: { bedrooms: count(b.bedrooms), bathrooms: count(b.bathrooms), kitchens: count(b.kitchens), livingRooms: count(b.livingRooms), stairs: count(b.stairs) },
     pets: typeof b.pets === "boolean" ? b.pets : undefined,
     supplies: SUPPLIES[b.supplies] ? b.supplies : "",
-    frequency: FREQUENCIES[b.frequency] ? b.frequency : "once",
     notes: clean(b.notes, 1000),
   };
   if (!LAGOS_AREAS.includes(details.area)) errors.area = "Choose the area in Lagos";
@@ -68,18 +67,18 @@ module.exports = function adminQuoteRoutes({ auth, mailer, config }) {
   // Live total for the quote builder.
   router.post("/price", async (req, res) => {
     const [services, settings] = await Promise.all([Service.find({ active: true }).lean(), getPricingSettings()]);
-    const allowOverride = ["owner", "manager"].includes(req.admin.role);
-    res.json(priceQuote(services, settings, { ...req.body, discount: allowOverride ? req.body?.discount : 0, allowOverride }));
+    const canOverride = ["owner", "manager"].includes(req.admin.role);
+    res.json(priceQuote(services, settings, { items: req.body?.items, supplies: req.body?.supplies, discount: req.body?.discount, canOverride }));
   });
 
   router.post("/", async (req, res) => {
     const b = req.body || {};
     const { customer, details, serviceDate, serviceTime, errors } = quoteCustomerInput(b);
     const [services, settings] = await Promise.all([Service.find({ active: true }).lean(), getPricingSettings()]);
-    const allowOverride = ["owner", "manager"].includes(req.admin.role);
+    const canOverride = ["owner", "manager"].includes(req.admin.role);
     let priced;
     try {
-      priced = priceQuote(services, settings, { items: b.items, frequency: details.frequency, supplies: details.supplies, discount: allowOverride ? b.discount : 0, allowOverride });
+      priced = priceQuote(services, settings, { items: b.items, supplies: details.supplies, discount: b.discount, canOverride });
     } catch (e) {
       if (!e.details) throw e;
       Object.assign(errors, e.details);

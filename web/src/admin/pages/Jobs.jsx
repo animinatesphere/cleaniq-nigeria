@@ -19,7 +19,7 @@ export default function Jobs() {
 
   const columns = [
     { key: "when", label: "When", render: (b) => `${shortDate(b.schedule?.date)} ${time12(b.schedule?.time)}` },
-    { key: "job", label: "Job", render: (b) => `${b.service}${b.details?.duration ? ` · ${b.details.duration}h` : ""}` },
+    { key: "job", label: "Job", render: (b) => `${b.service}${b.details?.size ? ` · ${b.details.size}` : ""}${b.details?.estHours ? ` · ~${b.details.estHours}h` : ""}` },
     { key: "area", label: "Area", render: (b) => b.details?.area },
     { key: "cleaner", label: "Cleaner", render: (b) => b.assignedWorkerName || <Badge tone="Pending">Needs a cleaner</Badge> },
     {

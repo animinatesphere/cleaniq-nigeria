@@ -11,6 +11,7 @@ import StepBar from "../components/booking/StepBar";
 import Calendar from "../components/booking/Calendar";
 import SummaryCard from "../components/booking/SummaryCard";
 import { ChoiceCard, Chips, Counter, Field, Select, TextArea, TextInput } from "../components/booking/fields";
+import { whatsappLink } from "../data";
 
 const DRAFT_KEY = "cleaniq-ng-booking-v1";
 const STEPS = [
@@ -23,7 +24,7 @@ const SERVICE_ICONS = { "regular-cleaning": House, "deep-cleaning": SprayCan, "p
 
 const EMPTY = {
   area: "", address: "", landmark: "",
-  service: "", frequency: "once", hours: null,
+  service: "",
   propertyType: "", bedrooms: 1, bathrooms: 1, kitchens: 1, livingRooms: 1, stairs: 0, pets: null,
   extras: {}, supplies: "", parking: "", access: "", instructions: "",
   date: "", time: "", firstName: "", lastName: "", email: "", phone: "",
@@ -31,7 +32,7 @@ const EMPTY = {
 
 // Which step each field lives on (to jump back when the server finds a problem).
 const FIELD_STEP = {
-  area: 0, address: 0, landmark: 0, service: 0, frequency: 0, hours: 0,
+  area: 0, address: 0, landmark: 0, service: 0,
   propertyType: 1, bedrooms: 1, bathrooms: 1, kitchens: 1, livingRooms: 1, stairs: 1, rooms: 1, pets: 1,
   extras: 2, supplies: 2, parking: 2, access: 2, instructions: 2,
   date: 3, time: 3, firstName: 3, lastName: 3, email: 3, phone: 3,
@@ -52,17 +53,23 @@ const isNgMobile = (v) => {
   return /^[789][01]\d{8}$/.test(local);
 };
 
+// Until the Get a Quote page is live, quote requests go to WhatsApp with the details so far.
+function quoteMessage(f) {
+  const bits = [f.propertyType && `${f.bedrooms === 0 ? "self-contain" : `${f.bedrooms}-bed`} ${f.propertyType.toLowerCase()}`, f.area].filter(Boolean).join(" in ");
+  return `Hi Cleaniq, I'd like a quote${bits ? ` for a ${bits}` : ""}.`;
+}
+
 // Same rules as the server, so people see problems before pressing Next.
-function validateStep(step, f, service) {
+function validateStep(step, f, service, needsQuote) {
   const e = {};
   if (step === 0) {
     if (!f.area) e.area = "Please choose your area in Lagos";
     if (f.address.trim().length < 5) e.address = "Please enter your full address";
     if (!service) e.service = "Please choose a service";
-    if (service && !(f.hours >= (service.minHours || 1))) e.hours = `Please choose at least ${service.minHours} hours`;
   }
   if (step === 1) {
     if (!f.propertyType) e.propertyType = "Please choose your property type";
+    else if (needsQuote) e.propertyType = "This property needs a quote — tap “Request a free quote” in the summary";
     if (f.bedrooms + f.bathrooms + f.kitchens + f.livingRooms < 1) e.rooms = "Please add at least one room to clean";
     if (typeof f.pets !== "boolean") e.pets = "Please let us know if you have pets";
   }
@@ -97,7 +104,7 @@ export default function Booking() {
   const [options, setOptions] = useState(null); // { areas, propertyTypes, parking, access, timeSlots, minDate, maxDate }
   const [loadError, setLoadError] = useState("");
   const [price, setPrice] = useState(null);
-  const [priceState, setPriceState] = useState({ loading: false, error: "" });
+  const [priceState, setPriceState] = useState({ loading: false, error: "", needsQuote: false });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const topRef = useRef(null);
@@ -108,7 +115,8 @@ export default function Booking() {
     Promise.all([api("/services"), api("/bookings/options")])
       .then(([c, o]) => {
         if (!alive) return;
-        setCatalog({ ...c, base: c.base.filter((s) => s.type === "hourly") });
+        // Bookable online: services priced by property size. Others (post-construction) are quoted.
+        setCatalog({ ...c, base: c.base.filter((s) => s.pricing === "size"), quoteOnly: c.base.filter((s) => s.pricing === "quote") });
         setOptions(o);
       })
       .catch((e) => alive && setLoadError(e.message));
@@ -118,18 +126,8 @@ export default function Booking() {
   }, []);
 
   const service = catalog?.base.find((s) => s.slug === form.service) || null;
-  const frequency = service?.frequencies.find((f) => f.key === form.frequency) || service?.frequencies[0];
-
-  // Keep choices valid when the service changes.
-  useEffect(() => {
-    if (!service) return;
-    setForm((f) => {
-      const next = { ...f };
-      if (!service.frequencies.some((x) => x.key === f.frequency)) next.frequency = "once";
-      if (!(f.hours >= service.minHours)) next.hours = service.minHours;
-      return next.frequency === f.frequency && next.hours === f.hours ? f : next;
-    });
-  }, [service]);
+  const quoteServices = catalog?.quoteOnly || [];
+  const quoteLink = () => whatsappLink(quoteMessage(form));
 
   // Drop a saved date that's now in the past.
   useEffect(() => {
@@ -147,25 +145,31 @@ export default function Booking() {
 
   // Live price from the server whenever a price-affecting choice changes.
   const extrasList = useMemo(() => Object.entries(form.extras).filter(([, q]) => q > 0).map(([slug, qty]) => ({ slug, qty })), [form.extras]);
-  const priceKey = JSON.stringify([form.service, form.frequency, form.hours, extrasList, form.supplies]);
+  const priceKey = JSON.stringify([form.service, form.propertyType, form.bedrooms, form.bathrooms, extrasList, form.supplies]);
   useEffect(() => {
-    if (!service || !form.hours) {
+    if (!service || !form.propertyType) {
       setPrice(null);
+      setPriceState({ loading: false, error: "", needsQuote: false });
       return;
     }
     const ctrl = new AbortController();
-    setPriceState({ loading: true, error: "" });
+    setPriceState((p) => ({ ...p, loading: true }));
     const t = setTimeout(() => {
       api("/bookings/quote-price", {
         method: "POST",
         signal: ctrl.signal,
-        body: { service: form.service, frequency: form.frequency, hours: form.hours, extras: extrasList, supplies: form.supplies || "customer" },
+        body: { service: form.service, propertyType: form.propertyType, bedrooms: form.bedrooms, bathrooms: form.bathrooms, extras: extrasList, supplies: form.supplies || "customer" },
       })
         .then((p) => {
           setPrice(p);
-          setPriceState({ loading: false, error: "" });
+          setPriceState({ loading: false, error: "", needsQuote: false });
         })
-        .catch((e) => e.name !== "AbortError" && setPriceState({ loading: false, error: e.message }));
+        .catch((e) => {
+          if (e.name === "AbortError") return;
+          setPrice(null);
+          const needsQuote = Boolean(e.details?.needsQuote);
+          setPriceState({ loading: false, error: needsQuote ? e.details.propertyType || e.details.service : e.message, needsQuote });
+        });
     }, 250);
     return () => {
       clearTimeout(t);
@@ -194,7 +198,7 @@ export default function Booking() {
   }
 
   function next() {
-    const e = validateStep(step, form, service);
+    const e = validateStep(step, form, service, priceState.needsQuote);
     setErrors(e);
     if (Object.keys(e).length) {
       requestAnimationFrame(() => document.querySelector("[aria-invalid='true'], [role='alert']")?.scrollIntoView({ behavior: "smooth", block: "center" }));
@@ -248,7 +252,7 @@ export default function Booking() {
       <div ref={topRef} className="mx-auto max-w-6xl scroll-mt-24 px-4 sm:px-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="text-center">
           <h1 className="text-[2rem] leading-tight font-extrabold tracking-tight text-ink sm:text-5xl">Book your clean</h1>
-          <p className="mx-auto mt-3 max-w-xl text-slate-600">Four quick steps. Your price updates as you go, and you'll pay securely with Paystack.</p>
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">Four quick steps. One fixed price per clean based on your home — you'll pay securely with Paystack.</p>
         </motion.div>
 
         <div className="mx-auto mt-8 max-w-3xl sm:mt-10">
@@ -303,7 +307,7 @@ export default function Booking() {
                                   onClick={() => set("service")(s.slug)}
                                   title={s.name}
                                   sub={s.description}
-                                  aside={`${naira(s.rate)}/hr`}
+                                  aside={s.fromPrice ? `from ${naira(s.fromPrice)}` : undefined}
                                   icon={<Icon className="h-5 w-5" />}
                                 />
                               );
@@ -312,33 +316,14 @@ export default function Booking() {
                         </fieldset>
                       </Field>
 
-                      {service && (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                          {service.frequencies.length > 1 && (
-                            <Chips
-                              id="frequency"
-                              label="How often?"
-                              value={form.frequency}
-                              onChange={set("frequency")}
-                              columns="grid-cols-2 sm:grid-cols-4"
-                              options={service.frequencies.map((f) => ({ value: f.key, label: f.label, sub: `${naira(f.rate)}/hr` }))}
-                            />
-                          )}
-                          <Counter
-                            id="hours"
-                            label="How many hours?"
-                            value={form.hours || service.minHours}
-                            onChange={set("hours")}
-                            min={service.minHours}
-                            max={12}
-                            step={0.5}
-                            format={(v) => `${v} hrs`}
-                            error={errors.hours}
-                          />
-                          <p className="-mt-3 text-xs text-slate-500">
-                            Not sure? A 2-bedroom flat usually needs 3–4 hours for a regular clean and 5–6 for a deep clean.
-                          </p>
-                        </motion.div>
+                      {quoteServices.length > 0 && (
+                        <div className="rounded-2xl border-2 border-dashed border-primary/25 bg-cream p-4">
+                          <p className="text-sm font-bold text-ink">{quoteServices.map((s) => s.name).join(", ")}</p>
+                          <p className="mt-1 text-sm text-slate-600">Priced per job after a quick look at the space.</p>
+                          <a href={quoteLink()} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-primary">
+                            Request a free quote <ArrowRight className="h-4 w-4" />
+                          </a>
+                        </div>
                       )}
                     </div>
                   )}
@@ -356,7 +341,7 @@ export default function Booking() {
                       <Field id="rooms" error={errors.rooms}>
                         <p className="mb-2 text-sm font-bold text-ink">Rooms to clean</p>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <Counter id="bedrooms" label="Bedrooms" value={form.bedrooms} onChange={set("bedrooms")} />
+                          <Counter id="bedrooms" label="Bedrooms" value={form.bedrooms} onChange={set("bedrooms")} format={(v) => (v === 0 ? "Self-contain" : v)} />
                           <Counter id="bathrooms" label="Bathrooms" value={form.bathrooms} onChange={set("bathrooms")} />
                           <Counter id="kitchens" label="Kitchens" value={form.kitchens} onChange={set("kitchens")} />
                           <Counter id="livingRooms" label="Living rooms" value={form.livingRooms} onChange={set("livingRooms")} />
@@ -514,10 +499,11 @@ export default function Booking() {
               <SummaryCard
                 form={form}
                 service={service}
-                frequencyLabel={frequency?.label}
+                quoteLink={quoteLink()}
                 price={price}
                 priceLoading={priceState.loading}
                 priceError={priceState.error}
+                needsQuote={priceState.needsQuote}
                 suppliesChosen={Boolean(form.supplies)}
               />
               <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/70 p-4 text-sm text-slate-600 ring-1 ring-slate-100">

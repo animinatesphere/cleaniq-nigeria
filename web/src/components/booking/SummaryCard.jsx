@@ -12,7 +12,7 @@ function Row({ icon: Icon, children }) {
   );
 }
 
-export default function SummaryCard({ form, service, frequencyLabel, price, priceLoading, priceError, suppliesChosen }) {
+export default function SummaryCard({ form, service, quoteLink, price, priceLoading, priceError, needsQuote, suppliesChosen }) {
   const rooms = [
     form.bedrooms && `${form.bedrooms} bed`,
     form.bathrooms && `${form.bathrooms} bath`,
@@ -24,9 +24,10 @@ export default function SummaryCard({ form, service, frequencyLabel, price, pric
     <aside aria-label="Booking summary" className="rounded-[1.75rem] bg-white p-6 shadow-[0_20px_60px_-20px_rgba(6,26,19,0.2)] ring-1 ring-slate-100 sm:p-7">
       <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Your booking</p>
       <h2 className="mt-2 text-xl font-extrabold text-ink">{service ? service.name : "Choose a service"}</h2>
-      {service && form.hours && (
+      {price?.size && (
         <p className="mt-1 text-sm font-semibold text-slate-500">
-          {form.hours} hours · {frequencyLabel}
+          {price.size}
+          {price.estHours ? ` · about ${price.estHours} hours` : ""}
         </p>
       )}
 
@@ -40,8 +41,20 @@ export default function SummaryCard({ form, service, frequencyLabel, price, pric
       <div className="mt-6 border-t border-dashed border-slate-200 pt-5">
         {!service ? (
           <p className="text-sm text-slate-500">Pick a service to see your price.</p>
+        ) : needsQuote ? (
+          <div>
+            <p className="text-sm font-semibold text-ink">{priceError}</p>
+            <a href={quoteLink} target="_blank" rel="noreferrer" className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-white">
+              Request a free quote
+            </a>
+          </div>
         ) : priceError ? (
           <p className="text-sm font-semibold text-rose-600">{priceError}</p>
+        ) : !form.propertyType ? (
+          <p className="text-sm text-slate-500">
+            {service.fromPrice ? <>From <strong className="text-ink">{naira(service.fromPrice)}</strong> per clean. </> : null}
+            Tell us about your property (step 2) to see your exact price.
+          </p>
         ) : (
           <div aria-live="polite" className={`transition-opacity ${priceLoading ? "opacity-50" : ""}`}>
             <ul className="space-y-2.5">
@@ -50,7 +63,7 @@ export default function SummaryCard({ form, service, frequencyLabel, price, pric
                   <motion.li key={l.key} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex justify-between gap-3 text-sm">
                     <span className="text-slate-600">
                       {l.label}
-                      {l.qty > 1 && !l.key.startsWith("labour") ? ` × ${l.qty}` : ""}
+                      {l.qty > 1 ? ` × ${l.qty}` : ""}
                     </span>
                     <span className="shrink-0 font-semibold text-ink">{naira(l.amount)}</span>
                   </motion.li>

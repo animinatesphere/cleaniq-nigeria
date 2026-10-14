@@ -57,6 +57,21 @@ test("cleaners: validation, availability, suspend, reset password", async () => 
   assert.ok(t.outbox.some((m) => m.type === "worker-password-reset"));
 });
 
+test("cleaners: pay is a monthly salary or a rate per completed job", async () => {
+  const id = (await t.api("POST", "/api/admin/workers", { token: manager, body: newWorker() })).body.worker._id;
+  let r = await t.api("PATCH", `/api/admin/workers/${id}`, { token: manager, body: { pay: { type: "weekly" } } });
+  assert.equal(r.status, 400);
+  r = await t.api("PATCH", `/api/admin/workers/${id}`, { token: manager, body: { pay: { type: "salary", monthlySalary: 120000 } } });
+  assert.equal(r.body.worker.pay.type, "salary");
+  assert.equal(r.body.worker.pay.monthlySalary, 120000);
+  // A salaried cleaner's completed job adds nothing per job (the salary covers it).
+  const { workerPayFor } = require("../src/lib/workerPay");
+  assert.equal(await workerPayFor({ assignedWorker: id }), 0);
+  await t.api("PATCH", `/api/admin/workers/${id}`, { token: manager, body: { pay: { type: "perJob", perJobRate: 7000 } } });
+  assert.equal(await workerPayFor({ assignedWorker: id }), 7000);
+  assert.equal((await t.api("PATCH", `/api/admin/workers/${id}`, { token: staff, body: { pay: { type: "perJob", perJobRate: 1 } } })).status, 403);
+});
+
 test("cleaners: bank details checked with Paystack; staff only see last 4 digits", async () => {
   const id = (await t.api("POST", "/api/admin/workers", { token: manager, body: newWorker() })).body.worker._id;
   let r = await t.api("PATCH", `/api/admin/workers/${id}/bank`, { token: manager, body: { bankCode: "058", bankName: "GTBank", accountNumber: "12345" } });
@@ -104,12 +119,12 @@ test("applicants: public form → admin accepts → cleaner account + welcome em
 test("customers: list with spend, profile timeline, edit tags, delete → Bin", async () => {
   const b = await t.api("POST", "/api/admin/bookings", {
     token: owner,
-    body: { area: "Ikoyi", address: "4 Bourdillon Road", service: "regular-cleaning", hours: 2, supplies: "customer", bedrooms: 1, date: addDays(lagosDate(), 2), time: "09:00", firstName: "Kemi", lastName: "Ade", email: "kemi@example.com", phone: "0803 000 1111", payment: "offline", offlineMethod: "Cash" },
+    body: { area: "Ikoyi", address: "4 Bourdillon Road", service: "regular-cleaning", propertyType: "Flat", supplies: "customer", bedrooms: 1, bathrooms: 1, date: addDays(lagosDate(), 2), time: "09:00", firstName: "Kemi", lastName: "Ade", email: "kemi@example.com", phone: "0803 000 1111", payment: "offline", offlineMethod: "Cash" },
   });
   assert.equal(b.status, 201);
   const list = await t.api("GET", "/api/admin/customers?q=kemi", { token: staff });
   assert.equal(list.body.items[0].bookings, 1);
-  assert.equal(list.body.items[0].spent, 10000);
+  assert.equal(list.body.items[0].spent, 15000);
   const id = list.body.items[0]._id;
   const prof = await t.api("GET", `/api/admin/customers/${id}`, { token: staff });
   assert.equal(prof.body.bookings.length, 1);

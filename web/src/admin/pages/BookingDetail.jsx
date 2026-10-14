@@ -126,8 +126,8 @@ export default function BookingDetail() {
             <h2 className="mb-2 font-extrabold text-white">Job</h2>
             <dl>
               <Row label="When">{`${shortDate(b.schedule?.date)} at ${time12(b.schedule?.time)}`}</Row>
-              <Row label="Service">{`${b.service}${b.details?.duration ? ` · ${b.details.duration} hours` : ""}`}</Row>
-              <Row label="How often">{{ once: "One-off", weekly: "Weekly", fortnightly: "Fortnightly", monthly: "Monthly" }[b.details?.frequency]}</Row>
+              <Row label="Service">{`${b.service}${b.details?.size ? ` · ${b.details.size}` : ""}`}</Row>
+              <Row label="Estimated time">{b.details?.estHours ? `About ${b.details.estHours} hours (for scheduling)` : ""}</Row>
               <Row label="Address">{[b.details?.address, b.details?.area].filter(Boolean).join(", ")}</Row>
               <Row label="Landmark">{b.details?.landmark}</Row>
               <Row label="Property">{[b.details?.propertyType, r.bedrooms && `${r.bedrooms} bed`, r.bathrooms && `${r.bathrooms} bath`, r.kitchens && `${r.kitchens} kitchen`, r.livingRooms && `${r.livingRooms} living`, r.stairs && `${r.stairs} stairs`].filter(Boolean).join(" · ")}</Row>
@@ -210,7 +210,7 @@ export default function BookingDetail() {
             <h2 className="mb-2 font-extrabold text-white">Price & payment</h2>
             <dl>
               {(b.price?.lines || []).map((l) => (
-                <Row key={l.key + l.label} label={`${l.label}${l.qty > 1 && !l.key?.startsWith("labour") ? ` × ${l.qty}` : ""}`}>
+                <Row key={l.key + l.label} label={`${l.label}${l.qty > 1 ? ` × ${l.qty}` : ""}`}>
                   {naira(l.amount)}
                 </Row>
               ))}

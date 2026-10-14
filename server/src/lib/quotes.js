@@ -3,7 +3,8 @@
 const crypto = require("node:crypto");
 const Quote = require("../models/Quote");
 const { round2, formatNaira } = require("./money");
-const { addVat, FREQUENCIES } = require("./pricing");
+const { addVat, sizePriceFor, extraBathrooms } = require("./pricing");
+const { bedroomLabel, MAX_BEDROOM_ROW } = require("./lagos");
 const { layout, detailsTable } = require("./email");
 const { escapeHtml } = require("./text");
 const { formatLagosDate, formatTime } = require("./time");
@@ -20,62 +21,86 @@ async function newQuoteRef() {
 }
 const newToken = () => crypto.randomBytes(16).toString("hex");
 
-// items: [{ serviceSlug, qty, option, unitPrice (override), extras: [{ slug, qty }] }]
-function priceQuote(services, settings, { items = [], frequency = "once", supplies, discount = 0, extrasDiscountPct = 0, allowOverride = false }) {
+// items: [{ serviceSlug, propertyType, bedrooms, bathrooms, qty, option, unitPrice, extras: [{ slug, qty }] }]
+//     or custom lines: [{ label, unitPrice, qty }]
+// canOverride (owners/managers): may change a price-list price and give a discount.
+// Any admin may price "quote" services (post-construction) and add custom lines — that's what quoting is.
+function priceQuote(services, settings, { items = [], supplies, discount = 0, extrasDiscountPct = 0, canOverride = false }) {
   const errors = {};
-  if (!Array.isArray(items) || !items.length || items.length > 15) throw badRequest("Add at least one service to the quote", { items: "Add at least one service" });
+  if (!Array.isArray(items) || !items.length || items.length > 15) throw badRequest("Add at least one line to the quote", { items: "Add at least one line" });
   const bySlug = new Map(services.filter((s) => s.active !== false).map((s) => [s.slug, s]));
+  const givenPrice = (it) => (it.unitPrice === undefined || it.unitPrice === null || it.unitPrice === "" ? null : Number(it.unitPrice));
   const out = [];
   items.forEach((it, i) => {
     const fail = (message) => {
       errors[`items.${i}`] = message;
     };
-    const svc = bySlug.get(String(it?.serviceSlug || ""));
-    if (!svc) return fail("Choose a service from the price list");
-    const qty = Number(it.qty ?? 1);
+    const qty = Number(it?.qty ?? 1);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 100) return fail("Quantity must be 1–100");
+    const priced = givenPrice(it || {});
+    if (priced !== null && !(priced >= 0 && priced <= 50_000_000)) return fail("Enter a valid price");
+
+    // Custom line
+    if (!it?.serviceSlug) {
+      const label = String(it?.label || "").replace(/<[^>]*>?/g, "").trim().slice(0, 120);
+      if (!label) return fail("Describe the custom line");
+      if (priced === null) return fail("Enter a price for the custom line");
+      return void out.push({ service: label, serviceSlug: "", kind: "custom", size: "", qty, unitPrice: round2(priced), option: "", extras: [], subtotal: round2(priced * qty) });
+    }
+
+    const svc = bySlug.get(String(it.serviceSlug));
+    if (!svc || svc.category !== "Base") return fail("Choose a service from the price list");
     let unit;
+    let size = "";
     let option = "";
-    if (svc.type === "hourly") {
-      if (!(qty >= 1 && qty <= 100) || qty * 2 !== Math.round(qty * 2)) return fail("Hours must be 1–100 (whole or half hours)");
-      const field = FREQUENCIES[frequency]?.field;
-      unit = (field && Number(svc[field]) > 0 ? Number(svc[field]) : svc.rate);
-    } else {
-      if (!Number.isInteger(qty) || qty < 1 || qty > 100) return fail("Quantity must be 1–100");
+    let estHours;
+    let kind = svc.pricing;
+    if (svc.pricing === "size") {
+      const bedrooms = Number(it.bedrooms ?? 0);
+      const cell = sizePriceFor(svc, it.propertyType, bedrooms);
+      size = `${bedroomLabel(Math.min(Math.max(0, bedrooms), MAX_BEDROOM_ROW))} ${it.propertyType || ""}`.trim();
+      if (cell) {
+        unit = cell.price + (svc.extraBathroomPrice || 0) * extraBathrooms(bedrooms, it.bathrooms);
+        estHours = cell.estHours ?? undefined;
+        if (priced !== null && canOverride) unit = priced;
+      } else if (priced !== null) {
+        unit = priced; // not in the table — the person quoting sets the price
+        kind = "quote";
+      } else return fail(`No list price for a ${size} — enter a price`);
+    } else if (svc.pricing === "fixed") {
       if (svc.options?.length) {
         const opt = svc.options.find((o) => o.label === it.option);
         if (!opt) return fail(`Choose: ${svc.options.map((o) => o.label).join(", ")}`);
         unit = opt.rate;
         option = opt.label;
       } else unit = svc.rate;
-    }
-    if (allowOverride && it.unitPrice !== undefined && it.unitPrice !== null && it.unitPrice !== "") {
-      const o = Number(it.unitPrice);
-      if (!(o >= 0 && o <= 10_000_000)) return fail("Enter a valid price");
-      unit = round2(o);
+      if (priced !== null && canOverride) unit = priced;
+    } else {
+      if (priced === null) return fail("Enter the price for this job");
+      unit = priced;
     }
     const extras = [];
     for (const e of Array.isArray(it.extras) ? it.extras : []) {
       const x = bySlug.get(String(e?.slug || ""));
       const q = Number(e?.qty ?? 1);
       if (!x || x.category !== "Extras" || !Number.isInteger(q) || q < 1 || q > 20) {
-        errors[`items.${i}`] = "Check the add-ons";
+        fail("Check the add-ons");
         continue;
       }
-      const xUnit = round2(x.rate * (1 - extrasDiscountPct / 100));
-      extras.push({ slug: x.slug, name: x.name, qty: q, unitPrice: xUnit });
+      extras.push({ slug: x.slug, name: x.name, qty: q, unitPrice: round2(x.rate * (1 - extrasDiscountPct / 100)) });
     }
     const subtotal = round2(unit * qty + extras.reduce((s, x) => s + x.unitPrice * x.qty, 0));
-    out.push({ service: svc.name, serviceSlug: svc.slug, billingType: svc.type, qty, unitPrice: unit, option, extras, subtotal });
+    out.push({ service: svc.name, serviceSlug: svc.slug, kind, size, estHours, qty, unitPrice: round2(unit), option, extras, subtotal });
   });
-  if (supplies === "cleaniq" && settings.suppliesFee > 0 && out.some((i) => i.billingType === "hourly")) {
-    out.push({ service: "Cleaning supplies & equipment", serviceSlug: "supplies", billingType: "flat", qty: 1, unitPrice: settings.suppliesFee, option: "", extras: [], subtotal: round2(settings.suppliesFee) });
+  if (supplies === "cleaniq" && settings.suppliesFee > 0 && out.some((i) => i.kind === "size")) {
+    const visits = out.filter((i) => i.kind === "size").reduce((s, i) => s + i.qty, 0);
+    out.push({ service: "Cleaning supplies & equipment", serviceSlug: "supplies", kind: "fixed", size: "", qty: visits, unitPrice: settings.suppliesFee, option: "", extras: [], subtotal: round2(settings.suppliesFee * visits) });
   }
   if (Object.keys(errors).length) throw badRequest("Please check the quote", errors);
 
   const gross = round2(out.reduce((s, i) => s + i.subtotal, 0));
-  const disc = round2(Math.min(Math.max(Number(discount) || 0, 0), gross));
-  const lines = [{ amount: round2(gross - disc) }];
-  const v = addVat(lines, settings.vat);
+  const disc = canOverride ? round2(Math.min(Math.max(Number(discount) || 0, 0), gross)) : 0;
+  const v = addVat([{ amount: round2(gross - disc) }], settings.vat);
   return { items: out, subtotal: gross, discount: disc, vat: v.vat, grandTotal: v.total };
 }
 
@@ -83,7 +108,7 @@ function quoteEmails(config) {
   const link = (q, token) => `${config.frontendUrl}/quote/${q.quoteRef}?t=${token}`;
   const itemsTable = (q) => {
     const rows = q.items.map((i) => [
-      `${i.service}${i.option ? ` (${i.option})` : ""} — ${i.billingType === "hourly" ? `${i.qty} hours` : `× ${i.qty}`}${i.extras?.length ? ` + ${i.extras.map((x) => `${x.name}${x.qty > 1 ? ` × ${x.qty}` : ""}`).join(", ")}` : ""}`,
+      `${i.service}${i.size ? ` — ${i.size}` : ""}${i.option ? ` (${i.option})` : ""}${i.qty > 1 ? ` × ${i.qty}` : ""}${i.extras?.length ? ` + ${i.extras.map((x) => `${x.name}${x.qty > 1 ? ` × ${x.qty}` : ""}`).join(", ")}` : ""}`,
       formatNaira(i.subtotal),
     ]);
     if (q.discount?.amount) rows.push([q.discount.label || "Discount", `−${formatNaira(q.discount.amount)}`]);

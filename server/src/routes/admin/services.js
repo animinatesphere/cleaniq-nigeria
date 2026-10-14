@@ -6,6 +6,7 @@ const { round2 } = require("../../lib/money");
 const { logAdmin } = require("../../lib/audit");
 const { moveToBin } = require("../../lib/bin");
 const { badRequest, notFound, HttpError } = require("../../middleware/errors");
+const { SIZE_PROPERTY_TYPES, MAX_BEDROOM_ROW } = require("../../lib/lagos");
 
 const MAX_PRICE = 10_000_000;
 const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
@@ -20,7 +21,7 @@ function money(v, field, errors, { optional = false } = {}) {
   return round2(n);
 }
 
-function serviceInput(body, { partial }) {
+function serviceInput(body, { partial, existing }) {
   const errors = {};
   const data = {};
   const has = (k) => !partial || body[k] !== undefined;
@@ -32,17 +33,35 @@ function serviceInput(body, { partial }) {
     if (!["Base", "Extras"].includes(body.category)) errors.category = "Choose main service or add-on";
     else data.category = body.category;
   }
-  if (has("type")) {
-    if (!["hourly", "flat"].includes(body.type)) errors.type = "Choose hourly or fixed price";
-    else data.type = body.type;
+  const category = data.category || existing?.category;
+  if (body.pricing !== undefined || (!partial && category === "Base")) {
+    if (!["size", "fixed", "quote"].includes(body.pricing)) errors.pricing = "Choose how it's priced";
+    else data.pricing = category === "Extras" ? "fixed" : body.pricing;
   }
-  if (has("rate")) data.rate = money(body.rate, "rate", errors);
-  for (const k of ["weeklyRate", "fortnightlyRate", "monthlyRate"]) if (body[k] !== undefined) data[k] = money(body[k], k, errors, { optional: true });
-  for (const k of ["workerHourlyRate", "workerPaymentRate"]) if (body[k] !== undefined) data[k] = money(body[k] || 0, k, errors);
-  if (body.minHours !== undefined) {
-    const n = Number(body.minHours);
-    if (!(n >= 1 && n <= 12) || n * 2 !== Math.round(n * 2)) errors.minHours = "Minimum hours must be 1–12";
-    else data.minHours = n;
+  if (category === "Extras") data.pricing = "fixed";
+  if (body.rate !== undefined || (!partial && (data.pricing === "fixed"))) data.rate = money(body.rate ?? 0, "rate", errors);
+  if (body.extraBathroomPrice !== undefined) data.extraBathroomPrice = money(body.extraBathroomPrice || 0, "extraBathroomPrice", errors);
+  if (body.sizePrices !== undefined) {
+    if (!Array.isArray(body.sizePrices) || body.sizePrices.length > SIZE_PROPERTY_TYPES.length * (MAX_BEDROOM_ROW + 1)) {
+      errors.sizePrices = "Check the price table";
+    } else {
+      const seen = new Set();
+      data.sizePrices = [];
+      for (const c of body.sizePrices) {
+        const key = `${c?.propertyType}:${c?.bedrooms}`;
+        const bedrooms = Number(c?.bedrooms);
+        if (!SIZE_PROPERTY_TYPES.includes(c?.propertyType) || !Number.isInteger(bedrooms) || bedrooms < 0 || bedrooms > MAX_BEDROOM_ROW || seen.has(key)) {
+          errors.sizePrices = "Check the price table";
+          break;
+        }
+        seen.add(key);
+        if (c.price === null || c.price === "" || c.price === undefined) continue; // empty cell = priced by quote
+        const price = money(c.price, `size.${key}`, errors);
+        const est = c.estHours === null || c.estHours === "" || c.estHours === undefined ? null : Number(c.estHours);
+        if (est !== null && !(est > 0 && est <= 24)) errors[`size.${key}`] = "Estimated hours must be 0–24";
+        if (price !== undefined) data.sizePrices.push({ propertyType: c.propertyType, bedrooms, price, estHours: est });
+      }
+    }
   }
   if (body.unitLabel !== undefined) data.unitLabel = clean(body.unitLabel, 30);
   if (body.description !== undefined) data.description = clean(body.description, 300);
@@ -74,12 +93,23 @@ module.exports = function adminServiceRoutes({ auth }) {
   });
 
   router.patch("/:id", managers, async (req, res) => {
-    const { data, errors } = serviceInput(req.body || {}, { partial: true });
-    if (Object.keys(errors).length) throw badRequest("Please check the service", errors);
     const before = await Service.findById(req.params.id).lean();
     if (!before) throw notFound("Service not found");
+    const { data, errors } = serviceInput(req.body || {}, { partial: true, existing: before });
+    if (Object.keys(errors).length) throw badRequest("Please check the service", errors);
     const s = await Service.findByIdAndUpdate(req.params.id, { $set: data }, { new: true, runValidators: true });
-    const changed = Object.fromEntries(Object.keys(data).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(s[k])).map((k) => [k, { from: before[k], to: s[k] }]));
+    const changed = Object.fromEntries(
+      Object.keys(data)
+        .filter((k) => k !== "sizePrices" && JSON.stringify(before[k]) !== JSON.stringify(s[k]))
+        .map((k) => [k, { from: before[k], to: s[k] }]),
+    );
+    if (data.sizePrices) {
+      const key = (c) => `${c.bedrooms}-bed ${c.propertyType}`;
+      const old = new Map((before.sizePrices || []).map((c) => [key(c), c.price]));
+      const now = new Map(s.sizePrices.map((c) => [key(c), c.price]));
+      const cells = [...new Set([...old.keys(), ...now.keys()])].filter((k) => old.get(k) !== now.get(k));
+      if (cells.length) changed.sizePrices = Object.fromEntries(cells.map((k) => [k, { from: old.get(k) ?? null, to: now.get(k) ?? null }]));
+    }
     await logAdmin(req, "service.update", s.slug, changed);
     res.json({ service: s });
   });

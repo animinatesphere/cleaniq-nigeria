@@ -139,7 +139,7 @@ function AgendaList({ days, byDay, today, onOpen, showEmpty, className = "" }) {
                     <li key={b._id}>
                       <button onClick={() => onOpen(b.bookingId)} className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-l-2 px-3 py-2 text-left text-sm ${TONE[b.status] || ""}`}>
                         <span className="font-bold text-white">{time12(b.schedule.time)}</span>
-                        <span className="text-white/85">{b.customer?.firstName} {b.customer?.lastName} · {b.service}{b.details?.duration ? ` (${b.details.duration}h)` : ""}</span>
+                        <span className="text-white/85">{b.customer?.firstName} {b.customer?.lastName} · {b.service}{b.details?.size ? ` (${b.details.size})` : ""}</span>
                         <span className="text-white/50">{b.details?.area} · {b.assignedWorkerName || "No cleaner"}</span>
                       </button>
                     </li>

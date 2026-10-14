@@ -33,7 +33,7 @@ export default function Bookings() {
   const columns = [
     { key: "ref", label: "Ref", render: (b) => <span className="font-bold text-white">{b.bookingId}</span> },
     { key: "customer", label: "Customer", render: (b) => `${b.customer?.firstName || ""} ${b.customer?.lastName || ""}` },
-    { key: "service", label: "Service", render: (b) => `${b.service}${b.details?.duration ? ` · ${b.details.duration}h` : ""}` },
+    { key: "service", label: "Service", render: (b) => `${b.service}${b.details?.size ? ` · ${b.details.size}` : ""}` },
     { key: "when", label: "When", render: (b) => `${shortDate(b.schedule?.date)} ${time12(b.schedule?.time)}` },
     { key: "area", label: "Area", render: (b) => b.details?.area },
     { key: "cleaner", label: "Cleaner", render: (b) => b.assignedWorkerName || <span className="text-white/40">—</span> },
