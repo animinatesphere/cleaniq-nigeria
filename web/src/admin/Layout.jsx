@@ -2,77 +2,70 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  CalendarDays, ClipboardList, CreditCard, FileText, History, LayoutDashboard, ListPlus, LogOut, Mail, Menu, Settings,
-  Tags, Trash2, UserPlus, Users, UsersRound, Wallet, X,
-} from "lucide-react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "./auth";
+import { GROUPS } from "./menu";
 import wordmark from "../assets/logo-wordmark-white-web.png";
 
-// roles: who sees the item (default: everyone)
-const GROUPS = [
-  { label: "Overview", items: [
-    { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-    { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
-  ] },
-  { label: "Bookings", items: [
-    { to: "/admin/bookings", label: "Bookings", icon: ClipboardList },
-    { to: "/admin/bookings/new", label: "New booking", icon: ListPlus, end: true },
-    { to: "/admin/jobs", label: "Jobs", icon: UsersRound },
-  ] },
-  { label: "Sales", items: [
-    { to: "/admin/quotes/new", label: "Quote builder", icon: FileText, end: true },
-    { to: "/admin/quotes", label: "Quote history", icon: History, end: true },
-  ] },
-  { label: "People", items: [
-    { to: "/admin/customers", label: "Customers", icon: Users },
-    { to: "/admin/staff", label: "Cleaners", icon: UsersRound },
-    { to: "/admin/applicants", label: "Applicants", icon: UserPlus },
-  ] },
-  { label: "Money", items: [
-    { to: "/admin/payments", label: "Payments", icon: CreditCard, roles: ["owner", "manager"] },
-    { to: "/admin/staff-pay", label: "Staff pay", icon: Wallet, roles: ["owner", "manager"] },
-  ] },
-  { label: "Setup", items: [
-    { to: "/admin/price-list", label: "Price list", icon: Tags },
-    { to: "/admin/settings", label: "Settings", icon: Settings },
-    { to: "/admin/emails", label: "Email history", icon: Mail },
-    { to: "/admin/bin", label: "Bin", icon: Trash2, roles: ["owner", "manager"] },
-  ] },
-];
+const isActive = (item, pathname) => pathname === item.to || (!item.end && pathname.startsWith(`${item.to}/`));
 
+// Sidebar: the UK admin's groups; each opens/closes, and the group of the current page opens itself.
 function Nav({ onNavigate }) {
   const { admin } = useAuth();
+  const { pathname } = useLocation();
+  const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.roles || i.roles.includes(admin.role)) })).filter((g) => g.items.length);
+  const current = groups.find((g) => g.items.some((i) => isActive(i, pathname)))?.label;
+  const [open, setOpen] = useState(() => new Set(["Overview", current].filter(Boolean)));
+  useEffect(() => {
+    if (current) setOpen((s) => (s.has(current) ? s : new Set([...s, current])));
+  }, [current]);
+  const toggle = (label) => setOpen((s) => {
+    const n = new Set(s);
+    if (n.has(label)) n.delete(label); else n.add(label);
+    return n;
+  });
+
   return (
-    <nav aria-label="Admin" className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
-      {GROUPS.map((g) => {
-        const items = g.items.filter((i) => !i.roles || i.roles.includes(admin.role));
-        if (!items.length) return null;
+    <nav aria-label="Admin" className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      {groups.map((g) => {
+        const isOpen = open.has(g.label);
         return (
           <div key={g.label}>
-            <p className="px-3 text-[11px] font-bold tracking-[0.18em] text-white/35 uppercase">{g.label}</p>
-            <ul className="mt-2 space-y-0.5">
-              {items.map((i) => (
-                <li key={i.to}>
-                  <NavLink
-                    to={i.to}
-                    end={i.end}
-                    onClick={onNavigate}
-                    className={({ isActive }) =>
-                      `relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${isActive ? "text-adm-bg" : "text-white/70 hover:bg-white/5 hover:text-white"}`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {isActive && <motion.span layoutId="adm-nav" className="absolute inset-0 rounded-xl bg-emerald-400" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
-                        <i.icon className="relative h-4 w-4" />
-                        <span className="relative">{i.label}</span>
-                      </>
-                    )}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
+            <button type="button" onClick={() => toggle(g.label)} aria-expanded={isOpen}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-bold tracking-[0.18em] text-white/40 uppercase hover:text-white/70">
+              <span>{g.label}</span>
+              <span className="flex items-center gap-2">
+                <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] tracking-normal text-white/35">{g.items.length}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </span>
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }} className="space-y-0.5 overflow-hidden pb-2">
+                  {g.items.map((i) => (
+                    <li key={i.to}>
+                      <NavLink
+                        to={i.to}
+                        end={i.end}
+                        onClick={onNavigate}
+                        className={({ isActive: on }) =>
+                          `relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${on ? "text-adm-bg" : "text-white/70 hover:bg-white/5 hover:text-white"}`
+                        }
+                      >
+                        {({ isActive: on }) => (
+                          <>
+                            {on && <motion.span layoutId="adm-nav" className="absolute inset-0 rounded-xl bg-emerald-400" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+                            <i.icon className="relative h-4 w-4" />
+                            <span className="relative">{i.label}</span>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                  ))}
+                </motion.ul>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
