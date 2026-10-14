@@ -45,6 +45,9 @@ const bookingSchema = new mongoose.Schema(
     payment: {
       amount: Number, // ₦, what we charge
       currency: { type: String, default: "NGN" },
+      // How this booking is paid: now (Paystack), after the clean, on the weekly bill, or by a monthly plan.
+      plan: { type: String, enum: ["payNow", "payAfter", "weekly", "subscription"], default: "payNow" },
+      dueDate: String, // YYYY-MM-DD (Lagos) when payment is due, for pay-after / weekly
       status: { type: String, enum: PAYMENT_STATUSES, default: "Pending" },
       method: String, // Paystack
       channel: String, // card, bank_transfer, ussd…
@@ -73,6 +76,8 @@ const bookingSchema = new mongoose.Schema(
       withdrawal: { type: mongoose.Schema.Types.ObjectId, ref: "Withdrawal" },
     },
     cancellation: { at: Date, by: String, reason: String },
+    // The customer's rating of their cleaner after the clean (1–5 stars).
+    cleanerRating: { stars: { type: Number, min: 1, max: 5 }, comment: String, ratedAt: Date },
     source: { type: String, default: "website" }, // website | admin | quote
     quoteRef: String,
     notes: [{ _id: false, text: String, by: String, at: { type: Date, default: Date.now } }],
