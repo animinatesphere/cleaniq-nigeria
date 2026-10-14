@@ -1,19 +1,41 @@
-// Cleaniq Nigeria — landing page (starter; the real design comes next).
-import { motion } from "framer-motion";
+// Cleaniq Nigeria — landing page.
+import { MotionConfig } from "framer-motion";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import WhoWeServe from "./components/WhoWeServe";
+import Services from "./components/Services";
+import Compare from "./components/Compare";
+import Rooms from "./components/Rooms";
+import HowItWorks from "./components/HowItWorks";
+import Plans from "./components/Plans";
+import Gallery from "./components/Gallery";
+import WhyUs from "./components/WhyUs";
+import Lagos from "./components/Lagos";
+import JoinTeam from "./components/JoinTeam";
+import FAQ from "./components/FAQ";
+import Footer from "./components/Footer";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 export default function App() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary-dark to-primary text-white flex items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="text-center max-w-2xl"
-      >
-        <p className="text-mint font-black tracking-[0.3em] uppercase text-sm">Coming soon · Nigeria</p>
-        <h1 className="mt-4 text-5xl md:text-7xl font-black tracking-tight">Cleaniq Nigeria</h1>
-        <p className="mt-6 text-lg md:text-xl text-white/80">Professional, trusted cleaning — Lagos, Abuja and beyond.</p>
-      </motion.div>
-    </main>
+    <MotionConfig reducedMotion="user">
+      <Navbar />
+      <main>
+        <Hero />
+        <WhoWeServe />
+        <Services />
+        <Compare />
+        <Rooms />
+        <HowItWorks />
+        <Plans />
+        <Gallery />
+        <WhyUs />
+        <Lagos />
+        <JoinTeam />
+        <FAQ />
+      </main>
+      <Footer />
+      <WhatsAppButton />
+    </MotionConfig>
   );
 }

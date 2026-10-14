@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
-/* Cleaniq Nigeria brand colours — adjust once the design is agreed. */
+/* Cleaniq brand colours — primary green matches the Cleaniq UK brand (#036847). */
 @theme {
-  --color-primary: #0f6b4c;
-  --color-primary-dark: #083d2e;
+  --color-primary: #036847;
+  --color-primary-dark: #025a3d;
+  --color-ink: #061a13;
   --color-mint: #6ee7b7;
+  --color-cream: #f3f9f5;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
 }
 
-html { scroll-behavior: smooth; }
-body { @apply bg-white text-slate-900 antialiased; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+html, body { overflow-x: clip; }
+body { @apply bg-white font-sans text-slate-900 antialiased; }
+::selection { @apply bg-mint text-ink; }
