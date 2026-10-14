@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 // Loaded only when someone opens them, so the home page stays fast.
 const Booking = lazy(() => import("./pages/Booking"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 import NotFound from "./pages/NotFound";
 import { EASE } from "./motion";
 
@@ -24,6 +25,16 @@ function Page({ children }) {
 export default function App() {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  // The admin has its own layout (no website navbar/footer).
+  if (location.pathname === "/admin" || location.pathname.startsWith("/admin/")) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-adm-bg" />}>
+        <Routes>
+          <Route path="/admin/*" element={<AdminApp />} />
+        </Routes>
+      </Suspense>
+    );
+  }
   return (
     <MotionConfig reducedMotion="user">
       <ScrollManager />
@@ -35,6 +46,7 @@ export default function App() {
             <Route path="/booking" element={<Page><Booking /></Page>} />
             <Route path="/payment/success" element={<Page><PaymentSuccess /></Page>} />
             <Route path="*" element={<Page><NotFound /></Page>} />
+          
           </Routes>
         </AnimatePresence>
       </main>

@@ -7,6 +7,10 @@
   --color-ink: #061a13;
   --color-mint: #6ee7b7;
   --color-cream: #f3f9f5;
+  /* Admin (dark green, like the UK admin) */
+  --color-adm-bg: #061a13;
+  --color-adm-card: #0b2d22;
+  --color-adm-raise: #0f3a2c;
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
 }
 
