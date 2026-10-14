@@ -48,7 +48,7 @@ async function handleTransferEvent(type, data) {
   } else {
     const w = await Withdrawal.findOneAndUpdate(
       { reference, status: "Processing" },
-      { $set: { status: "Failed", failureReason: data?.reason || type } },
+      { $set: { status: "Failed", failureReason: data?.reason || type }, $unset: { payrollKey: "" } },
       { new: true },
     );
     if (w) await Booking.updateMany({ _id: { $in: w.bookings } }, { $set: { "workerPay.status": "unpaid" }, $unset: { "workerPay.withdrawal": "" } });

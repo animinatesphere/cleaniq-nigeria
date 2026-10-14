@@ -19,11 +19,12 @@ module.exports = function adminSettingsRoutes({ auth, config, mailer }) {
   const emails = staffEmails(config);
 
   router.get("/", async (req, res) => {
-    const [business, pricing] = await Promise.all([getSetting("business"), getPricingSettings()]);
+    const [business, pricing, payroll] = await Promise.all([getSetting("business"), getPricingSettings(), getSetting("payroll")]);
     res.json({
       business: { ...BUSINESS_DEFAULT, ...(business || {}) },
       vat: pricing.vat,
       suppliesFee: pricing.suppliesFee,
+      payroll: { payday: 28, ...(payroll || {}) },
       // Keys live in server/.env — the admin only sees whether each is set.
       integrations: {
         paystack: Boolean(config.paystackSecretKey), email: Boolean(config.resendApiKey), emailFrom: config.emailFrom,
@@ -62,6 +63,15 @@ module.exports = function adminSettingsRoutes({ auth, config, mailer }) {
     await Promise.all([setSetting("vat", vat), setSetting("suppliesFee", round2(fee))]);
     await logAdmin(req, "settings.pricing", "pricing", { vat, suppliesFee: round2(fee) });
     res.json({ vat, suppliesFee: round2(fee) });
+  });
+
+  // Payday: the day of the month cleaners are paid (1–28).
+  router.put("/payroll", managers, async (req, res) => {
+    const payday = Number(req.body?.payday);
+    if (!(Number.isInteger(payday) && payday >= 1 && payday <= 28)) throw badRequest("Payday must be a day from 1 to 28", { payday: "Choose a day from 1 to 28" });
+    await setSetting("payroll", { payday });
+    await logAdmin(req, "settings.payroll", "payroll", { payday });
+    res.json({ payroll: { payday } });
   });
 
   // ── Admin users & roles (owner only) ──────────────────────────────────────────────────
