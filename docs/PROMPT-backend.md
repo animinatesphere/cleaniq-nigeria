@@ -20,7 +20,13 @@ phases) for what each feature must do. This prompt is the backend foundation and
   `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `TERMII_API_KEY` (SMS),
   `ANTHROPIC_API_KEY` (blog AI / receptionist). Refuse to start if a required key is missing.
   Never put keys in code or ask me to paste them in chat.
-- Its **own MongoDB database** (e.g. `cleaniq_ng` on Atlas). Never the UK database.
+- Its **own MongoDB database**, `cleaniq_ng`, **running on our VPS** (MongoDB Community installed on the
+  VPS, listening on `127.0.0.1` only — never open to the internet — with a database user and password;
+  `MONGODB_URI=mongodb://<user>:<pass>@127.0.0.1:27017/cleaniq_ng?authSource=admin`). Never the UK database.
+  Because the database lives on the same VPS, **backups are our job**: add `scripts/backup-db.js`
+  (mongodump → compressed file) and a daily cron at 3am Lagos time that keeps the last 14 copies on the
+  VPS **and uploads each copy off the VPS** (e.g. to a cloud storage bucket or emailed/synced elsewhere),
+  plus `scripts/restore-db.js` with clear instructions. Test the restore once.
 - `GET /api/health` → `{ ok: true }`.
 - CORS only for `FRONTEND_URL` (and localhost in development). JSON body limit 1 MB.
 - `npm run dev` (watch), `npm start`, `npm test`, `npm run seed` (creates the first owner admin from
@@ -72,9 +78,10 @@ tests/                node:test + mongodb-memory-server, one file per area
 7. Worker app API (job feed, accept, arrive, start, complete with photos, earnings) and customer app API.
 
 ## Deployment notes (for later)
-Runs as its own process on the server (e.g. pm2 name `cleaniq-ng-api`, its own port), its own domain
-(e.g. `api.cleaniq.ng`), separate from the UK `cleaniq-api`. Add `scripts/backup-db.js` like the UK one
-and run it before each deploy.
+Runs as its own process on the VPS (e.g. pm2 name `cleaniq-ng-api`, its own port), its own domain
+(e.g. `api.cleaniq.ng`), separate from the UK `cleaniq-api`. MongoDB runs on the same VPS (see Setup);
+run `scripts/backup-db.js` before each deploy as well as the daily backup. Check the VPS has enough RAM
+for MongoDB + both APIs (MongoDB needs ~1 GB to be comfortable) and enough disk; tell me if it doesn't.
 
 Commit locally after each step (don't push). After each step, tell me in plain English what works and
 how to test it.
