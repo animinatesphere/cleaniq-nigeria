@@ -14,22 +14,25 @@ const DRAFT_KEY = "cleaniq-ng-booking-v1";
 export default function PaymentSuccess() {
   const [params] = useSearchParams();
   const bookingId = params.get("booking") || "";
+  const invoiceNo = params.get("invoice") || ""; // invoices / payment links / monthly plans
   const reference = params.get("reference") || params.get("trxref") || "";
   const [status, setStatus] = useState(null);
-  const [state, setState] = useState(bookingId && reference ? "checking" : "missing"); // checking | paid | pending | missing | error
+  const [state, setState] = useState((bookingId || invoiceNo) && reference ? "checking" : "missing"); // checking | paid | pending | missing | error
 
   useEffect(() => {
-    if (!bookingId || !reference) return;
+    if ((!bookingId && !invoiceNo) || !reference) return;
     let alive = true;
     let tries = 0;
     let timer;
     const check = async () => {
       tries++;
       try {
-        const s = await api(`/bookings/${encodeURIComponent(bookingId)}/status?reference=${encodeURIComponent(reference)}`);
+        const s = invoiceNo
+          ? await api(`/invoices/${encodeURIComponent(invoiceNo)}/status?reference=${encodeURIComponent(reference)}`)
+          : await api(`/bookings/${encodeURIComponent(bookingId)}/status?reference=${encodeURIComponent(reference)}`);
         if (!alive) return;
         setStatus(s);
-        if (s.paymentStatus === "Paid") {
+        if (s.paymentStatus === "Paid" || s.status === "Paid") {
           setState("paid");
           try {
             localStorage.removeItem(DRAFT_KEY);
@@ -52,7 +55,7 @@ export default function PaymentSuccess() {
       alive = false;
       clearTimeout(timer);
     };
-  }, [bookingId, reference]);
+  }, [bookingId, invoiceNo, reference]);
 
   return (
     <section className="grid min-h-screen place-items-center bg-cream px-4 pt-24 pb-16">
@@ -82,7 +85,14 @@ export default function PaymentSuccess() {
               <Check className="h-10 w-10" strokeWidth={3} />
             </motion.span>
             <h1 className="mt-6 text-3xl font-extrabold text-ink">Payment successful</h1>
-            <p className="mt-3 text-slate-600">Your clean is booked. We've emailed your confirmation.</p>
+            <p className="mt-3 text-slate-600">{invoiceNo ? "Thank you — your payment has been received." : "Your clean is booked. We've emailed your confirmation."}</p>
+            {invoiceNo ? (
+              <div className="mt-7 rounded-2xl bg-cream p-5 text-left">
+                <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Invoice</p>
+                <p className="mt-1 text-2xl font-extrabold tracking-wide text-ink">{status.invoiceNo}</p>
+                <div className="mt-4 flex justify-between gap-4 text-sm"><span className="text-slate-500">Paid</span><span className="font-semibold text-ink">{naira(status.total)}</span></div>
+              </div>
+            ) : (
             <div className="mt-7 rounded-2xl bg-cream p-5 text-left">
               <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Booking reference</p>
               <p className="mt-1 text-2xl font-extrabold tracking-wide text-ink">{status.bookingId}</p>
@@ -93,6 +103,7 @@ export default function PaymentSuccess() {
                 <div className="flex justify-between gap-4"><dt className="text-slate-500">Paid</dt><dd className="text-right font-semibold text-ink">{naira(status.total)}</dd></div>
               </dl>
             </div>
+            )}
             <p className="mt-5 text-sm text-slate-500">Quote your reference if you need to contact us.</p>
           </div>
         )}

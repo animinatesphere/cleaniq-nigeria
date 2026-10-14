@@ -131,7 +131,11 @@ export default function NewBooking() {
                 label="Payment"
                 options={[
                   { value: "paystack", label: "Email a Paystack payment link" },
-                  ...(can("owner", "manager") ? [{ value: "offline", label: "Already paid (cash / transfer)" }] : []),
+                  ...(can("owner", "manager") ? [
+                    { value: "offline", label: "Already paid (cash / transfer)" },
+                    { value: "payAfter", label: "Pay after the clean (invoice the day after)" },
+                    { value: "weekly", label: "Weekly bill (invoiced every week)" },
+                  ] : []),
                   { value: "later", label: "Take payment later" },
                 ]}
                 value={form.payment}
