@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const STATUSES = ["Pending", "Confirmed", "Assigned", "In Progress", "Completed", "Cancelled"];
-const PAYMENT_STATUSES = ["Pending", "Paid", "Failed", "Refunded", "Not required"];
+const PAYMENT_STATUSES = ["Pending", "Paid", "Failed", "Refund pending", "Refunded", "Not required"];
 
 const lineSchema = new mongoose.Schema({ key: String, label: String, qty: Number, unitPrice: Number, amount: Number }, { _id: false });
 
@@ -52,9 +52,27 @@ const bookingSchema = new mongoose.Schema(
       authorizationUrl: String,
       paidAt: Date,
       problem: String, // e.g. amount mismatch — for admin to check
+      offline: { method: String, note: String, by: String }, // paid outside Paystack (cash / bank transfer), recorded by admin
+      refund: { amount: Number, status: String, providerId: String, requestedAt: Date, processedAt: Date, by: String, reason: String },
     },
     status: { type: String, enum: STATUSES, default: "Pending", index: true },
     assignedWorker: { type: mongoose.Schema.Types.ObjectId, ref: "Worker", default: null },
+    assignedWorkerName: { type: String, default: "" },
+    // Job board for cleaners: hidden = no cleaner sees it; visibleTo = only these cleaners (empty = all).
+    job: {
+      hidden: { type: Boolean, default: false },
+      visibleTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "Worker" }],
+      acceptedAt: Date,
+      startedAt: Date,
+      finishedAt: Date,
+    },
+    // What the cleaner earns for this job (set when it's completed).
+    workerPay: {
+      amount: { type: Number, default: 0 },
+      status: { type: String, enum: ["none", "unpaid", "processing", "paid"], default: "none" },
+      withdrawal: { type: mongoose.Schema.Types.ObjectId, ref: "Withdrawal" },
+    },
+    cancellation: { at: Date, by: String, reason: String },
     source: { type: String, default: "website" }, // website | admin | quote
     quoteRef: String,
     notes: [{ _id: false, text: String, by: String, at: { type: Date, default: Date.now } }],

@@ -1,6 +1,8 @@
 // Paystack webhook. The only (with server-side verify) way a booking becomes paid.
 const express = require("express");
 const { isValidSignature } = require("../lib/paystack");
+const { handleTransferEvent } = require("../lib/payouts");
+const { handleRefundEvent } = require("../lib/refunds");
 
 module.exports = function paymentRoutes({ config, confirmPayment }) {
   const router = express.Router();
@@ -16,8 +18,13 @@ module.exports = function paymentRoutes({ config, confirmPayment }) {
     } catch {
       return res.status(400).json({ error: "Invalid JSON" });
     }
-    if (event?.event === "charge.success" && event.data?.status === "success") {
+    const type = event?.event;
+    if (type === "charge.success" && event.data?.status === "success") {
       await confirmPayment(event.data);
+    } else if (type === "transfer.success" || type === "transfer.failed" || type === "transfer.reversed") {
+      await handleTransferEvent(type, event.data);
+    } else if (type === "refund.processed" || type === "refund.failed") {
+      await handleRefundEvent(type, event.data);
     }
     // Always 200 for a genuine Paystack call, otherwise it keeps retrying.
     res.json({ received: true });

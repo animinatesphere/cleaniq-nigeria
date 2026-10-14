@@ -33,6 +33,14 @@ function createPaystack(config, fetchImpl = globalThis.fetch) {
     // → transaction { status: "success" | …, amount, currency, reference, channel, paid_at }
     verify: (reference) => call("GET", `/transaction/verify/${encodeURIComponent(reference)}`),
     refund: ({ reference, amountKobo }) => call("POST", "/refund", { transaction: reference, ...(amountKobo ? { amount: amountKobo } : {}) }),
+    // Cleaner payouts (Paystack Transfers)
+    listBanks: () => call("GET", "/bank?country=nigeria&currency=NGN&perPage=100"),
+    resolveAccount: ({ accountNumber, bankCode }) =>
+      call("GET", `/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`),
+    createRecipient: ({ name, accountNumber, bankCode }) =>
+      call("POST", "/transferrecipient", { type: "nuban", name, account_number: accountNumber, bank_code: bankCode, currency: "NGN" }),
+    transfer: ({ amountKobo, recipient, reference, reason }) =>
+      call("POST", "/transfer", { source: "balance", amount: amountKobo, recipient, reference, reason }),
   };
 }
 

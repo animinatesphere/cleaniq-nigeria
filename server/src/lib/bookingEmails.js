@@ -75,6 +75,18 @@ function bookingEmails(config) {
         button: { label: "Book your next clean", url: `${config.frontendUrl}/booking` },
       }),
     }),
+    cancelled: (b, reason) => ({
+      subject: `Booking ${b.bookingId} cancelled — Cleaniq`,
+      type: "booking-cancelled",
+      html: layout(config, {
+        title: "Your booking has been cancelled",
+        intro: `${hi(b)} your booking <strong>${escapeHtml(b.bookingId)}</strong> for ${escapeHtml(formatLagosDate(b.schedule?.date))} has been cancelled.${reason ? ` Reason: ${escapeHtml(reason)}.` : ""}`,
+        bodyHtml: b.payment?.status === "Refund pending" || b.payment?.status === "Refunded"
+          ? `<p style="font-size:14px;color:#334155;line-height:1.6">A refund of <strong>${formatNaira(b.payment.refund?.amount)}</strong> is on its way to your original payment method. It can take 5–10 working days to appear.</p>`
+          : "",
+        button: { label: "Book again", url: `${config.frontendUrl}/booking` },
+      }),
+    }),
     team: (b) => ({
       subject: `New paid booking ${b.bookingId}: ${b.service} on ${b.schedule?.date}`,
       type: "team-new-booking",

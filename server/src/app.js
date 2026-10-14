@@ -48,6 +48,9 @@ function createApp(config, deps = {}) {
   app.use("/api/services", require("./routes/services")(ctx));
   app.use("/api/bookings", require("./routes/bookings")(ctx));
   app.use("/api/payments", require("./routes/payments")(ctx));
+  app.use("/api/quotes", require("./routes/quotes")(ctx));
+  app.use("/api/applicants", require("./routes/applicants")(ctx));
+  app.use("/api/admin", require("./routes/admin")(ctx));
 
   app.use("/api", notFoundHandler);
   app.use(notFoundHandler);

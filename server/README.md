@@ -35,3 +35,12 @@ See `scripts/README-backups.md` (daily backup at 3am Lagos time, copies off the 
 | POST | `/api/bookings` | public — creates a Pending booking + Paystack checkout |
 | GET | `/api/bookings/:bookingId/status?reference=` | public, no personal details |
 | POST | `/api/payments/paystack/webhook` | Paystack (signed) |
+| POST | `/api/applicants` | public — cleaner job application |
+| GET/POST | `/api/quotes/:ref?t=`, `/api/quotes/:ref/accept` | public — quote page (secret token in the emailed link) |
+| * | `/api/admin/*` | admin login required; roles owner / manager / staff (see `tests/admin.access.test.js`) |
+
+### Admin API areas
+dashboard · bookings (list, calendar, jobs, new, status, assign, visibility, reschedule, notes, resend, payment link,
+mark paid, cancel, refund, cleaner pay, delete) · customers · workers (+ banks, bank details, suspend, reset password) ·
+applicants · services (price list) · quotes · payments · staff-pay (+ withdrawals → Paystack Transfers) · settings
+(+ admin users) · emails · bin · audit

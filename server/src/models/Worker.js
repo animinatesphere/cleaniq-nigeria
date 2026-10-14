@@ -9,6 +9,10 @@ const workerSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     passwordHash: { type: String, required: true, select: false },
     areas: { type: [String], default: [] }, // Lagos areas they cover
+    // Weekly availability, e.g. [{ day: 1, from: "08:00", to: "17:00" }] (day 0 = Sunday)
+    availability: [{ _id: false, day: { type: Number, min: 0, max: 6 }, from: String, to: String }],
+    notes: { type: String, default: "" },
+    mustChangePassword: { type: Boolean, default: false },
     status: { type: String, enum: ["active", "suspended"], default: "active" },
     bank: {
       bankName: String,

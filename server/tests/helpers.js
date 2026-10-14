@@ -56,11 +56,11 @@ async function startTestServer({ deps = {}, env = {} } = {}) {
     await mongod.stop();
   }
 
-  // Creates an admin and returns a logged-in token.
+  // Creates an admin (password "correct-horse-battery") and returns a token for them.
+  // Tokens are signed directly so tests don't trip the login rate limit; auth.test.js covers the real login.
   async function adminToken(role = "owner", email = `${role}@cleaniq.test`) {
-    await Admin.create({ name: role, email, role, passwordHash: await bcrypt.hash("correct-horse-battery", 4) });
-    const r = await api("POST", "/api/auth/admin/login", { body: { email, password: "correct-horse-battery" } });
-    return r.body.token;
+    const admin = await Admin.create({ name: role, email, role, passwordHash: await bcrypt.hash("correct-horse-battery", 4) });
+    return app.locals.ctx.auth.signAdmin(admin);
   }
 
   return { api, reset, stop, config, app, outbox, adminToken, base };

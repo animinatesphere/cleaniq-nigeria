@@ -11,7 +11,8 @@ function count(v) {
   return Number.isInteger(n) && n >= 0 && n <= 20 ? n : NaN;
 }
 
-function validateBookingInput(body = {}, now = new Date()) {
+// admin: staff booking over the phone — today is allowed and property/access details are optional.
+function validateBookingInput(body = {}, now = new Date(), { admin = false } = {}) {
   const errors = {};
   const data = {};
 
@@ -24,29 +25,29 @@ function validateBookingInput(body = {}, now = new Date()) {
 
   // Step 2 — property
   data.propertyType = clean(body.propertyType, 30);
-  if (!PROPERTY_TYPES.includes(data.propertyType)) errors.propertyType = "Please choose your property type";
+  if (!PROPERTY_TYPES.includes(data.propertyType) && !(admin && !data.propertyType)) errors.propertyType = "Please choose your property type";
   data.rooms = {};
   for (const k of ["bedrooms", "bathrooms", "kitchens", "livingRooms", "stairs"]) {
     data.rooms[k] = count(body[k]);
     if (Number.isNaN(data.rooms[k])) errors[k] = "Please enter a number between 0 and 20";
   }
   const rooms = ["bedrooms", "bathrooms", "kitchens", "livingRooms"].reduce((s, k) => s + (data.rooms[k] || 0), 0);
-  if (!Object.keys(errors).some((k) => k in data.rooms) && rooms < 1) errors.rooms = "Please add at least one room to clean";
-  if (typeof body.pets !== "boolean") errors.pets = "Please let us know if you have pets";
+  if (!Object.keys(errors).some((k) => k in data.rooms) && rooms < 1 && !admin) errors.rooms = "Please add at least one room to clean";
+  if (typeof body.pets !== "boolean" && !admin) errors.pets = "Please let us know if you have pets";
   data.pets = body.pets === true;
 
   // Step 3 — access
   data.parking = clean(body.parking, 60);
-  if (!PARKING_OPTIONS.includes(data.parking)) errors.parking = "Please tell us about parking";
+  if (!PARKING_OPTIONS.includes(data.parking) && !(admin && !data.parking)) errors.parking = "Please tell us about parking";
   data.access = clean(body.access, 60);
-  if (!ACCESS_OPTIONS.includes(data.access)) errors.access = "Please tell us how the cleaner gets in";
+  if (!ACCESS_OPTIONS.includes(data.access) && !(admin && !data.access)) errors.access = "Please tell us how the cleaner gets in";
   data.instructions = clean(body.instructions, 1000);
 
   // Step 4 — date, time, details
   data.date = String(body.date || "");
-  const tomorrow = addDays(lagosDate(now), 1);
+  const tomorrow = addDays(lagosDate(now), admin ? 0 : 1);
   const lastDay = addDays(lagosDate(now), MAX_DAYS_AHEAD);
-  if (!isValidDate(data.date) || data.date < tomorrow) errors.date = "Please choose a date from tomorrow onwards";
+  if (!isValidDate(data.date) || data.date < tomorrow) errors.date = admin ? "Please choose today or a later date" : "Please choose a date from tomorrow onwards";
   else if (data.date > lastDay) errors.date = `Please choose a date within the next ${MAX_DAYS_AHEAD} days`;
   data.time = String(body.time || "");
   if (!TIME_SLOTS.includes(data.time)) errors.time = "Please choose an arrival time between 8am and 6pm";
