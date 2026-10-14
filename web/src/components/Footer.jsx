@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router";
 import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { CONTACT, SERVICES, whatsappLink } from "../data";
 import { Logo } from "./Navbar";
@@ -57,10 +58,10 @@ function CTA() {
   );
 }
 
-export default function Footer() {
+export default function Footer({ showCta = true }) {
   return (
     <>
-      <CTA />
+      {showCta && <CTA />}
       <footer className="bg-ink text-white/70">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-4 py-14 sm:px-8 sm:py-16 lg:grid-cols-4 lg:gap-12">
           <div className="col-span-2 lg:col-span-1">
@@ -74,10 +75,10 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {SERVICES.map((s) => (
                 <li key={s.id}>
-                  <a href="#services" className="group inline-flex items-center gap-1 hover:text-mint">
+                  <Link to="/#services" className="group inline-flex items-center gap-1 hover:text-mint">
                     {s.title}
                     <ArrowRight className="h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -85,12 +86,12 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-white">Company</h3>
             <ul className="mt-5 space-y-3">
-              <li><a href="#how-it-works" className="hover:text-mint">How it works</a></li>
-              <li><a href="#why-us" className="hover:text-mint">Why Cleaniq</a></li>
-              <li><a href="#plans" className="hover:text-mint">Cleaning plans</a></li>
-              <li><a href="#careers" className="hover:text-mint">Join our team</a></li>
-              <li><a href="#lagos" className="hover:text-mint">Areas we cover</a></li>
-              <li><a href="#faq" className="hover:text-mint">FAQ</a></li>
+              <li><Link to="/#how-it-works" className="hover:text-mint">How it works</Link></li>
+              <li><Link to="/#why-us" className="hover:text-mint">Why Cleaniq</Link></li>
+              <li><Link to="/#plans" className="hover:text-mint">Cleaning plans</Link></li>
+              <li><Link to="/#careers" className="hover:text-mint">Join our team</Link></li>
+              <li><Link to="/#lagos" className="hover:text-mint">Areas we cover</Link></li>
+              <li><Link to="/#faq" className="hover:text-mint">FAQ</Link></li>
             </ul>
           </div>
           <div className="col-span-2 sm:col-span-1">

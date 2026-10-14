@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight, Check } from "lucide-react";
-import { SERVICES, whatsappLink } from "../data";
+import { Link } from "react-router";
+import { SERVICES } from "../data";
 import { Icon, SectionHeading, TiltCard } from "./ui";
 import { EASE } from "../motion";
 
@@ -60,15 +61,13 @@ function ServiceCard({ service, index }) {
           ))}
         </ul>
 
-        <a
-          href={whatsappLink(`Hi Cleaniq, I'd like to book ${service.title.toLowerCase()} in Lagos.`)}
-          target="_blank"
-          rel="noreferrer"
+        <Link
+          to={`/booking?service=${service.slug}`}
           className="mt-8 inline-flex items-center justify-between rounded-full bg-cream px-6 py-3.5 text-sm font-bold sm:text-base text-primary transition-colors group-hover:bg-primary group-hover:text-white"
         >
           Book {service.title.split(" ")[0].toLowerCase()} clean
           <ArrowUpRight className="h-5 w-5 transition-transform group-hover:rotate-45" />
-        </a>
+        </Link>
       </div>
     </TiltCard>
     </motion.article>

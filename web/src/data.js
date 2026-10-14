@@ -14,6 +14,7 @@ export const whatsappLink = (message = "Hi Cleaniq, I'd like to book a clean in 
 export const SERVICES = [
   {
     id: "regular",
+    slug: "regular-cleaning",
     title: "Regular Cleaning",
     tagline: "Weekly, bi-weekly or monthly",
     description:
@@ -31,6 +32,7 @@ export const SERVICES = [
   },
   {
     id: "deep",
+    slug: "deep-cleaning",
     title: "Deep Cleaning",
     tagline: "Top-to-bottom, every corner",
     description:
@@ -48,6 +50,7 @@ export const SERVICES = [
   },
   {
     id: "post-construction",
+    slug: "post-construction-cleaning",
     title: "Post-Construction",
     tagline: "After building or renovation",
     description:

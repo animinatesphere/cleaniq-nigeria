@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, CalendarCheck, Check, MapPin, ShieldCheck } from "lucide-react";
-import { whatsappLink } from "../data";
+import { Link } from "react-router";
 import { EASE } from "../motion";
 
+const MotionLink = motion.create(Link);
 const ROTATING = ["homes.", "offices.", "short-lets.", "new builds."];
 const TICKER = ["Regular cleaning", "Deep cleaning", "Post-construction cleaning", "Lagos Island", "Lagos Mainland", "Homes", "Offices", "Short-lets"];
 
@@ -136,10 +137,8 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.75, ease: EASE }}
             className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:gap-4"
           >
-            <motion.a
-              href={whatsappLink()}
-              target="_blank"
-              rel="noreferrer"
+            <MotionLink
+              to="/booking"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
               className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-primary px-8 py-4 font-bold text-white shadow-xl shadow-primary/30"
@@ -149,9 +148,9 @@ export default function Hero() {
                 animate={{ left: ["-40%", "140%"] }}
                 transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.5, ease: "easeInOut" }}
               />
-              Book a clean
+              Book now
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </motion.a>
+            </MotionLink>
             <motion.a
               href="#services"
               whileHover={{ scale: 1.04, y: -2 }}

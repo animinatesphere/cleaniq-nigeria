@@ -1,40 +1,44 @@
-// Cleaniq Nigeria — landing page.
-import { MotionConfig } from "framer-motion";
+// Cleaniq Nigeria website: shared layout + pages, with animated page transitions.
+import { lazy, Suspense } from "react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { Route, Routes, useLocation } from "react-router";
 import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import WhoWeServe from "./components/WhoWeServe";
-import Services from "./components/Services";
-import Compare from "./components/Compare";
-import Rooms from "./components/Rooms";
-import HowItWorks from "./components/HowItWorks";
-import Plans from "./components/Plans";
-import Gallery from "./components/Gallery";
-import WhyUs from "./components/WhyUs";
-import Lagos from "./components/Lagos";
-import JoinTeam from "./components/JoinTeam";
-import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
+import ScrollManager from "./components/ScrollManager";
+import Home from "./pages/Home";
+// Loaded only when someone opens them, so the home page stays fast.
+const Booking = lazy(() => import("./pages/Booking"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+import NotFound from "./pages/NotFound";
+import { EASE } from "./motion";
+
+function Page({ children }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.4, ease: EASE }}>
+      <Suspense fallback={<div className="min-h-screen bg-cream" />}>{children}</Suspense>
+    </motion.div>
+  );
+}
 
 export default function App() {
+  const location = useLocation();
+  const isHome = location.pathname === "/";
   return (
     <MotionConfig reducedMotion="user">
+      <ScrollManager />
       <Navbar />
       <main>
-        <Hero />
-        <WhoWeServe />
-        <Services />
-        <Compare />
-        <Rooms />
-        <HowItWorks />
-        <Plans />
-        <Gallery />
-        <WhyUs />
-        <Lagos />
-        <JoinTeam />
-        <FAQ />
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Page><Home /></Page>} />
+            <Route path="/booking" element={<Page><Booking /></Page>} />
+            <Route path="/payment/success" element={<Page><PaymentSuccess /></Page>} />
+            <Route path="*" element={<Page><NotFound /></Page>} />
+          </Routes>
+        </AnimatePresence>
       </main>
-      <Footer />
+      <Footer showCta={isHome} />
       <WhatsAppButton />
     </MotionConfig>
   );

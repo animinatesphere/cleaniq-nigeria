@@ -1,24 +1,26 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring } from "framer-motion";
+import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
-import { whatsappLink } from "../data";
 import { EASE } from "../motion";
 // Web-sized copy of logo-wordmark-white.png (the original is 8078px wide / 476 KB).
 import wordmark from "../assets/logo-wordmark-white-web.png";
 
+const MotionLink = motion.create(Link);
+
 const LINKS = [
-  { href: "#services", label: "Services" },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#rooms", label: "Checklist" },
-  { href: "#plans", label: "Plans" },
-  { href: "#lagos", label: "Areas" },
-  { href: "#faq", label: "FAQ" },
+  { to: "/#services", label: "Services" },
+  { to: "/#how-it-works", label: "How it works" },
+  { to: "/#rooms", label: "Checklist" },
+  { to: "/#plans", label: "Plans" },
+  { to: "/#lagos", label: "Areas" },
+  { to: "/#faq", label: "FAQ" },
 ];
 
 // White wordmark — only place it on a dark/green background.
 export function Logo({ className = "h-11 sm:h-14" }) {
   return (
-    <a href="#top" className="flex shrink-0 items-center" aria-label="Cleaniq Services — home">
+    <Link to="/" className="flex shrink-0 items-center" aria-label="Cleaniq Services — home">
       <motion.img
         src={wordmark}
         alt="Cleaniq Services"
@@ -26,7 +28,7 @@ export function Logo({ className = "h-11 sm:h-14" }) {
         whileHover={{ scale: 1.04 }}
         transition={{ type: "spring", stiffness: 300, damping: 18 }}
       />
-    </a>
+    </Link>
   );
 }
 
@@ -51,28 +53,26 @@ export default function Navbar() {
         <Logo />
         <ul className="hidden items-center gap-0.5 lg:flex">
           {LINKS.map((l) => (
-            <li key={l.href}>
-              <a
-                href={l.href}
+            <li key={l.to}>
+              <Link
+                to={l.to}
                 className="group relative rounded-full px-3.5 py-2 text-sm font-semibold text-white/85 transition-colors hover:text-white"
               >
                 {l.label}
                 <span className="absolute inset-x-4 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-mint transition-transform duration-300 group-hover:scale-x-100" />
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
         <div className="flex items-center gap-3">
-          <motion.a
-            href={whatsappLink()}
-            target="_blank"
-            rel="noreferrer"
+          <MotionLink
+            to="/booking"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             className="hidden rounded-full bg-mint px-6 py-3 text-sm font-bold text-ink shadow-lg shadow-ink/20 transition-colors hover:bg-white sm:inline-flex"
           >
-            Book a clean
-          </motion.a>
+            Book now
+          </MotionLink>
           <button
             onClick={() => setOpen((o) => !o)}
             className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 lg:hidden"
@@ -104,16 +104,16 @@ export default function Navbar() {
           >
             <ul className="space-y-1 px-4 py-5">
               {LINKS.map((l, i) => (
-                <motion.li key={l.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}>
-                  <a onClick={() => setOpen(false)} href={l.href} className="block rounded-xl px-4 py-3 font-semibold text-white/85 hover:bg-white/10 hover:text-white">
+                <motion.li key={l.to} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}>
+                  <Link onClick={() => setOpen(false)} to={l.to} className="block rounded-xl px-4 py-3 font-semibold text-white/85 hover:bg-white/10 hover:text-white">
                     {l.label}
-                  </a>
+                  </Link>
                 </motion.li>
               ))}
               <li className="pt-2">
-                <a href={whatsappLink()} target="_blank" rel="noreferrer" className="block rounded-full bg-mint px-6 py-3.5 text-center font-bold text-ink">
-                  Book a clean
-                </a>
+                <Link to="/booking" onClick={() => setOpen(false)} className="block rounded-full bg-mint px-6 py-3.5 text-center font-bold text-ink">
+                  Book now
+                </Link>
               </li>
             </ul>
           </motion.div>
