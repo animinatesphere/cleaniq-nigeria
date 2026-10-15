@@ -4,6 +4,8 @@ import { ApiError } from "../lib/api";
 
 const KEY = "cleaniq-ng-admin";
 const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+// npm run demo → the admin runs on sample data in the browser (no API). Never on in a normal build.
+export const DEMO = import.meta.env.VITE_ADMIN_DEMO === "1";
 const AuthContext = createContext(null);
 
 function readStored() {
@@ -31,6 +33,7 @@ export function AuthProvider({ children }) {
 
   const request = useCallback(
     async (path, { method = "GET", body, signal } = {}) => {
+      if (DEMO) return (await import("./demo/mock.js")).mockRequest(path, { method, body });
       let res;
       try {
         res = await fetch(`${BASE}/api${path}`, {

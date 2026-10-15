@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demo": "VITE_ADMIN_DEMO=1 vite"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

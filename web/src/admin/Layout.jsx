@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, LogOut, Menu, X } from "lucide-react";
-import { useAuth } from "./auth";
+import { DEMO, useAuth } from "./auth";
 import { GROUPS } from "./menu";
 import wordmark from "../assets/logo-wordmark-white-web.png";
 
@@ -101,6 +101,7 @@ export default function Layout() {
         <div className="flex h-16 items-center px-5">
           <img src={wordmark} alt="Cleaniq" className="h-10 w-auto" />
           <span className="ml-2 rounded-md bg-emerald-400/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">ADMIN</span>
+          {DEMO && <span className="ml-1 rounded-md bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">DEMO</span>}
         </div>
         <Nav />
         <UserBox />

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
-import { useAuth } from "../auth";
+import { DEMO, useAuth } from "../auth";
 import { Button } from "../ui";
 import { EASE } from "../../motion";
 import wordmark from "../../assets/logo-wordmark-white-web.png";
@@ -175,7 +175,11 @@ export default function Login() {
             <Button type="submit" loading={busy} icon={Lock} className="mt-7 w-full rounded-2xl py-4 text-base shadow-lg shadow-emerald-500/30">
               Log in securely
             </Button>
-            <p className="mt-6 text-center text-xs text-white/40">Forgotten your password? Ask the owner to reset it from Settings.</p>
+            {DEMO ? (
+              <p className="mt-6 rounded-xl bg-amber-400/10 p-3 text-center text-xs font-semibold text-amber-200">Demo mode — sample data only. Type any email and password.</p>
+            ) : (
+              <p className="mt-6 text-center text-xs text-white/40">Forgotten your password? Ask the owner to reset it from Settings.</p>
+            )}
           </div>
         </motion.form>
       </div>
