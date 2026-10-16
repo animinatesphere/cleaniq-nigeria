@@ -29,7 +29,7 @@ function Opening() {
         </motion.p>
         <motion.h1 initial={{ opacity: 0, y: 50, clipPath: "inset(0 0 100% 0)" }} animate={{ opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)" }} transition={{ duration: 1.2, delay: 0.6, ease: EASE }}
           className="max-w-3xl text-[2.6rem] leading-[1.03] font-extrabold tracking-tight text-white sm:text-7xl">
-          Let's get your space <span className="text-mint">sparkling.</span>
+          Let's talk about your <span className="text-mint">clean.</span>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 1.1, ease: EASE }} className="mt-6 max-w-xl text-base text-white/75 sm:text-lg">
           Questions, prices, a big job or a booking you'd like to change — our Lagos team usually replies within the hour.

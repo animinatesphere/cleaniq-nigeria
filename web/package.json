@@ -4,11 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_MOCK_API=1 VITE_ADMIN_DEMO=1 vite",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "demo": "VITE_ADMIN_DEMO=1 vite"
+    "demo": "VITE_MOCK_API=1 VITE_ADMIN_DEMO=1 vite",
+    "dev:api": "vite",
+    "build:demo": "VITE_MOCK_API=1 VITE_ADMIN_DEMO=1 vite build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { motion } from "framer-motion";
 import { Check, Clock, Loader2 } from "lucide-react";
-import { api } from "../lib/api";
+import { MOCK, api } from "../lib/api";
 import { longDate, naira, time12 } from "../lib/format";
 import { EASE } from "../motion";
 
@@ -104,6 +104,7 @@ export default function PaymentSuccess() {
               </dl>
             </div>
             )}
+            {MOCK && <p className="mt-5 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">Demo mode — this is a test booking. No payment was taken.</p>}
             <p className="mt-5 text-sm text-slate-500">Quote your reference if you need to contact us.</p>
           </div>
         )}

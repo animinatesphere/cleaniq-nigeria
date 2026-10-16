@@ -232,7 +232,7 @@ export default function Hero() {
             initial={{ opacity: 0, x: 40, scale: 0.8 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 160, damping: 16, delay: 1.3 }}
-            className="absolute top-5 right-3 sm:top-10 sm:-right-8"
+            className="absolute top-5 right-3 sm:top-10 xl:-right-8"
           >
             <motion.div
               animate={{ y: [0, 12, 0] }}

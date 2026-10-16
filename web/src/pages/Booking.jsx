@@ -38,12 +38,13 @@ const FIELD_STEP = {
   date: 3, time: 3, firstName: 3, lastName: 3, email: 3, phone: 3,
 };
 
-function loadDraft() {
+// No saved progress: refreshing the page starts the booking again from the beginning.
+// (Clear anything an older version of the site saved in this browser.)
+function clearOldDraft() {
   try {
-    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
-    return d && typeof d === "object" ? { form: { ...EMPTY, ...d.form }, step: Math.min(3, Math.max(0, Number(d.step) || 0)) } : null;
+    localStorage.removeItem(DRAFT_KEY);
   } catch {
-    return null;
+    /* private mode — fine */
   }
 }
 
@@ -91,13 +92,12 @@ function validateStep(step, f, service, needsQuote) {
 
 export default function Booking() {
   const [params] = useSearchParams();
-  const draft = useMemo(loadDraft, []);
   const [form, setForm] = useState(() => {
-    const f = draft?.form || EMPTY;
+    clearOldDraft();
     const pre = params.get("service");
-    return pre && !f.service ? { ...f, service: pre } : f;
+    return pre ? { ...EMPTY, service: pre } : EMPTY;
   });
-  const [step, setStep] = useState(draft?.step || 0);
+  const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
   const [errors, setErrors] = useState({});
   const [catalog, setCatalog] = useState(null); // { base, extras, suppliesFee }
@@ -134,14 +134,6 @@ export default function Booking() {
     if (options && form.date && (form.date < options.minDate || form.date > options.maxDate)) setForm((f) => ({ ...f, date: "" }));
   }, [options, form.date]);
 
-  // Save the form in this browser.
-  useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step }));
-    } catch {
-      /* private mode — fine */
-    }
-  }, [form, step]);
 
   // Live price from the server whenever a price-affecting choice changes.
   const extrasList = useMemo(() => Object.entries(form.extras).filter(([, q]) => q > 0).map(([slug, qty]) => ({ slug, qty })), [form.extras]);

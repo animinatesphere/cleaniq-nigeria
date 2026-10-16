@@ -1,0 +1,576 @@
+{
+ "services": {
+  "base": [
+   {
+    "name": "Regular Cleaning",
+    "slug": "regular-cleaning",
+    "category": "Base",
+    "pricing": "size",
+    "rate": 0,
+    "unitLabel": "",
+    "description": "Routine upkeep — dusting, floors, kitchen and bathrooms.",
+    "options": [],
+    "sizePrices": [
+     {
+      "propertyType": "Flat",
+      "bedrooms": 0,
+      "price": 10000,
+      "estHours": 2
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 1,
+      "price": 15000,
+      "estHours": 2.5
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 2,
+      "price": 20000,
+      "estHours": 3
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 3,
+      "price": 25000,
+      "estHours": 4
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 4,
+      "price": 32000,
+      "estHours": 5
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 5,
+      "price": 40000,
+      "estHours": 6
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 6,
+      "price": 48000,
+      "estHours": 7
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 1,
+      "price": 16500,
+      "estHours": 3
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 2,
+      "price": 22000,
+      "estHours": 3.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 3,
+      "price": 27500,
+      "estHours": 4.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 4,
+      "price": 35000,
+      "estHours": 5.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 5,
+      "price": 44000,
+      "estHours": 6.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 6,
+      "price": 53000,
+      "estHours": 7.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 1,
+      "price": 16500,
+      "estHours": 3
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 2,
+      "price": 22000,
+      "estHours": 3.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 3,
+      "price": 27500,
+      "estHours": 4.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 4,
+      "price": 35000,
+      "estHours": 5.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 5,
+      "price": 44000,
+      "estHours": 6.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 6,
+      "price": 53000,
+      "estHours": 7.5
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 2,
+      "price": 27000,
+      "estHours": 4
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 3,
+      "price": 34000,
+      "estHours": 5
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 4,
+      "price": 43000,
+      "estHours": 6
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 5,
+      "price": 54000,
+      "estHours": 7
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 6,
+      "price": 65000,
+      "estHours": 8
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 4,
+      "price": 57500,
+      "estHours": 7
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 5,
+      "price": 72000,
+      "estHours": 8
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 6,
+      "price": 86500,
+      "estHours": 9
+     }
+    ],
+    "fromPrice": 10000,
+    "extraBathroomPrice": 3000
+   },
+   {
+    "name": "Deep Cleaning",
+    "slug": "deep-cleaning",
+    "category": "Base",
+    "pricing": "size",
+    "rate": 0,
+    "unitLabel": "",
+    "description": "Top-to-bottom clean including inside cabinets, grout and behind furniture.",
+    "options": [],
+    "sizePrices": [
+     {
+      "propertyType": "Flat",
+      "bedrooms": 0,
+      "price": 20000,
+      "estHours": 4
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 1,
+      "price": 30000,
+      "estHours": 5
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 2,
+      "price": 40000,
+      "estHours": 6
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 3,
+      "price": 50000,
+      "estHours": 7
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 4,
+      "price": 65000,
+      "estHours": 9
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 5,
+      "price": 80000,
+      "estHours": 11
+     },
+     {
+      "propertyType": "Flat",
+      "bedrooms": 6,
+      "price": 95000,
+      "estHours": 13
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 1,
+      "price": 33000,
+      "estHours": 5.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 2,
+      "price": 44000,
+      "estHours": 6.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 3,
+      "price": 55000,
+      "estHours": 7.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 4,
+      "price": 71500,
+      "estHours": 9.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 5,
+      "price": 88000,
+      "estHours": 11.5
+     },
+     {
+      "propertyType": "Terrace",
+      "bedrooms": 6,
+      "price": 104500,
+      "estHours": 13.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 1,
+      "price": 33000,
+      "estHours": 5.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 2,
+      "price": 44000,
+      "estHours": 6.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 3,
+      "price": 55000,
+      "estHours": 7.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 4,
+      "price": 71500,
+      "estHours": 9.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 5,
+      "price": 88000,
+      "estHours": 11.5
+     },
+     {
+      "propertyType": "Bungalow",
+      "bedrooms": 6,
+      "price": 104500,
+      "estHours": 13.5
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 2,
+      "price": 54000,
+      "estHours": 7
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 3,
+      "price": 67500,
+      "estHours": 8
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 4,
+      "price": 88000,
+      "estHours": 10
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 5,
+      "price": 108000,
+      "estHours": 12
+     },
+     {
+      "propertyType": "Duplex",
+      "bedrooms": 6,
+      "price": 128500,
+      "estHours": 14
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 4,
+      "price": 117000,
+      "estHours": 11
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 5,
+      "price": 144000,
+      "estHours": 13
+     },
+     {
+      "propertyType": "Mansion",
+      "bedrooms": 6,
+      "price": 171000,
+      "estHours": 15
+     }
+    ],
+    "fromPrice": 20000,
+    "extraBathroomPrice": 6000
+   },
+   {
+    "name": "Post-Construction Cleaning",
+    "slug": "post-construction-cleaning",
+    "category": "Base",
+    "pricing": "quote",
+    "rate": 0,
+    "unitLabel": "",
+    "description": "Dust, paint and cement splashes cleared after building or renovation. Priced per job after a quick look.",
+    "options": []
+   },
+   {
+    "name": "Carpet Cleaning",
+    "slug": "carpet-cleaning",
+    "category": "Base",
+    "pricing": "fixed",
+    "rate": 8000,
+    "unitLabel": "carpet",
+    "description": "Deep shampoo for carpets and rugs.",
+    "options": []
+   },
+   {
+    "name": "Oven Cleaning",
+    "slug": "oven-cleaning",
+    "category": "Base",
+    "pricing": "fixed",
+    "rate": 15000,
+    "unitLabel": "oven",
+    "description": "Degreasing inside and out, racks and trays.",
+    "options": [
+     {
+      "label": "Single oven",
+      "rate": 15000
+     },
+     {
+      "label": "Double oven",
+      "rate": 22000
+     },
+     {
+      "label": "Range cooker",
+      "rate": 30000
+     }
+    ]
+   }
+  ],
+  "extras": [
+   {
+    "name": "Inside oven",
+    "slug": "extra-inside-oven",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 10000,
+    "unitLabel": "oven",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Inside fridge",
+    "slug": "extra-inside-fridge",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 7500,
+    "unitLabel": "fridge",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Inside cabinets",
+    "slug": "extra-inside-cabinets",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 6000,
+    "unitLabel": "kitchen",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Carpet or rug shampoo",
+    "slug": "extra-carpet",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 8000,
+    "unitLabel": "carpet",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Inside windows",
+    "slug": "extra-windows",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 2500,
+    "unitLabel": "room",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Laundry",
+    "slug": "extra-laundry",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 5000,
+    "unitLabel": "load",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Ironing",
+    "slug": "extra-ironing",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 4000,
+    "unitLabel": "load",
+    "description": "",
+    "options": []
+   },
+   {
+    "name": "Balcony or terrace",
+    "slug": "extra-balcony",
+    "category": "Extras",
+    "pricing": "fixed",
+    "rate": 4000,
+    "unitLabel": "balcony",
+    "description": "",
+    "options": []
+   }
+  ],
+  "suppliesFee": 5000,
+  "vat": {
+   "enabled": false,
+   "rate": 7.5,
+   "label": "VAT"
+  },
+  "currency": "NGN"
+ },
+ "options": {
+  "areas": [
+   "Ajah",
+   "Badore",
+   "Chevron",
+   "Ikota",
+   "Lekki Phase 1",
+   "Lekki Phase 2",
+   "Osapa London",
+   "Agungi",
+   "Jakande",
+   "Oniru",
+   "Victoria Island",
+   "Ikoyi",
+   "Banana Island",
+   "Sangotedo",
+   "Abraham Adesanya",
+   "Awoyaya",
+   "Ikeja",
+   "Ikeja GRA",
+   "Allen Avenue",
+   "Opebi",
+   "Maryland",
+   "Magodo",
+   "Ojodu Berger",
+   "Omole",
+   "Ogudu",
+   "Gbagada",
+   "Anthony",
+   "Ilupeju",
+   "Yaba",
+   "Surulere",
+   "Ebute Metta",
+   "Festac",
+   "Amuwo Odofin",
+   "Isolo",
+   "Ikotun",
+   "Egbeda",
+   "Ogba",
+   "Agege",
+   "Ikorodu",
+   "Lagos Island",
+   "Other (tell us in the address)"
+  ],
+  "propertyTypes": [
+   "Flat",
+   "Terrace",
+   "Bungalow",
+   "Duplex",
+   "Mansion",
+   "Office"
+  ],
+  "parking": [
+   "Parking inside the compound",
+   "Street parking nearby",
+   "No parking available"
+  ],
+  "access": [
+   "Someone will be home",
+   "The gateman / security will let you in",
+   "Key left with security / concierge"
+  ],
+  "timeSlots": [
+   "08:00",
+   "08:30",
+   "09:00",
+   "09:30",
+   "10:00",
+   "10:30",
+   "11:00",
+   "11:30",
+   "12:00",
+   "12:30",
+   "13:00",
+   "13:30",
+   "14:00",
+   "14:30",
+   "15:00",
+   "15:30",
+   "16:00",
+   "16:30",
+   "17:00",
+   "17:30",
+   "18:00"
+  ]
+ }
+}

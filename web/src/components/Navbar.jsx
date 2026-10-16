@@ -53,7 +53,7 @@ export default function Navbar() {
       <motion.div style={{ scaleX: progress }} className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-mint" />
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-8">
         <Logo />
-        <ul className="hidden items-center gap-0.5 lg:flex">
+        <ul className="hidden items-center gap-0.5 xl:flex">
           {LINKS.map((l) => (
             <li key={l.to}>
               <Link
@@ -77,7 +77,7 @@ export default function Navbar() {
           </MotionLink>
           <button
             onClick={() => setOpen((o) => !o)}
-            className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 lg:hidden"
+            className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 xl:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
           >
             <AnimatePresence mode="wait" initial={false}>
@@ -102,7 +102,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="overflow-hidden border-t border-white/10 bg-primary-dark lg:hidden"
+            className="overflow-hidden border-t border-white/10 bg-primary-dark xl:hidden"
           >
             <ul className="space-y-1 px-4 py-5">
               {LINKS.map((l, i) => (

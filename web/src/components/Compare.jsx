@@ -7,7 +7,7 @@ import { SectionHeading } from "./ui";
 const COLS = [
   { key: "regular", label: "Regular", short: "Regular" },
   { key: "deep", label: "Deep", short: "Deep" },
-  { key: "post", label: "Post-construction", short: "Post-build" },
+  { key: "post", label: "Post-construction", short: "After build" },
 ];
 
 function Mark({ on, delay }) {
@@ -48,9 +48,9 @@ export default function Compare() {
           <table className="w-full table-fixed text-left">
             <thead>
               <tr className="bg-ink text-white">
-                <th className="w-[46%] px-4 py-4 text-xs font-bold tracking-wider uppercase sm:w-1/2 sm:px-8 sm:text-sm">What's included</th>
+                <th className="w-[40%] px-3 py-4 text-[11px] font-bold tracking-wider uppercase sm:w-1/2 sm:px-8 sm:text-sm">What's included</th>
                 {COLS.map((c) => (
-                  <th key={c.key} className="px-0.5 py-4 text-center text-[11px] leading-tight font-bold sm:px-2 sm:text-sm">
+                  <th key={c.key} className="px-0.5 py-4 text-center text-[11px] leading-tight font-bold break-words sm:px-2 sm:text-sm">
                     <span className="sm:hidden">{c.short}</span>
                     <span className="hidden sm:inline">{c.label}</span>
                   </th>
@@ -67,7 +67,7 @@ export default function Compare() {
                   transition={{ duration: 0.5, delay: r * 0.05, ease: EASE }}
                   className="border-t border-slate-100 transition-colors hover:bg-cream"
                 >
-                  <td className="px-4 py-3.5 text-[13px] leading-snug font-semibold text-slate-700 sm:px-8 sm:py-4 sm:text-base">{row.task}</td>
+                  <td className="px-3 py-3.5 text-[13px] leading-snug font-semibold text-slate-700 sm:px-8 sm:py-4 sm:text-base">{row.task}</td>
                   {COLS.map((c, ci) => (
                     <td key={c.key} className="px-1 py-3 text-center sm:px-2">
                       <Mark on={row[c.key]} delay={0.2 + r * 0.05 + ci * 0.08} />

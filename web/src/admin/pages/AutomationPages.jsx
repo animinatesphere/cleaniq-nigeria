@@ -1,6 +1,6 @@
 // Admin → Automations, SMS automation and AI receptionist (settings + what it knows).
 import { useState } from "react";
-import { Bell, Bot, CalendarClock, CheckCircle2, FileText, MessageSquare, Phone, Receipt, Repeat, Save, Send, Smartphone, Sparkles, XCircle } from "lucide-react";
+import { Bell, Bot, CalendarClock, CheckCircle2, FileText, MessageSquare, Phone, Receipt, Repeat, Save, Send, Smartphone, XCircle } from "lucide-react";
 import { useAuth, useLoad } from "../auth";
 import { Badge, Button, Card, ErrorBox, Input, Loading, PageHeader, StatCard, TextArea, Toggle, useAction, useToast } from "../ui";
 import CollectionPage from "./CollectionPage";
@@ -134,7 +134,7 @@ export function AiReceptionist() {
       {error ? <ErrorBox error={error} onRetry={reload} /> : loading && !data ? <Loading /> : (
         <div className="space-y-5">
           <div className="grid gap-3 md:grid-cols-3">
-            {[["Claude (the AI)", data.ready.claude, Sparkles, "Add ANTHROPIC_API_KEY to server/.env"], ["WhatsApp", data.ready.whatsapp, MessageSquare, "Connect a WhatsApp Business number — next step"], ["Phone calls", data.ready.phone, Phone, "Connect a Nigerian phone number — next step"]].map(([name, ok, Icon, hint]) => (
+            {[["Claude (the AI)", data.ready.claude, Bot, "Add ANTHROPIC_API_KEY to server/.env"], ["WhatsApp", data.ready.whatsapp, MessageSquare, "Connect a WhatsApp Business number — next step"], ["Phone calls", data.ready.phone, Phone, "Connect a Nigerian phone number — next step"]].map(([name, ok, Icon, hint]) => (
               <Card key={name} className="flex items-center gap-3">
                 <span className={`grid h-10 w-10 place-items-center rounded-xl ${ok ? "bg-emerald-400/15 text-emerald-300" : "bg-white/8 text-white/40"}`}><Icon className="h-5 w-5" /></span>
                 <div className="min-w-0"><p className="font-bold text-white">{name}</p><p className="truncate text-xs text-white/50">{ok ? "Connected" : hint}</p></div>

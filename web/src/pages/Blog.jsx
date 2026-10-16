@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { AnimatePresence, motion, useScroll, useSpring, useTransform } from "framer-motion";
-import { ArrowDown, ArrowUpRight, Clock, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Clock, Star } from "lucide-react";
 import { postDate, readMinutes, usePosts } from "../lib/blog";
 import { EASE } from "../motion";
 
@@ -84,7 +84,7 @@ function Featured({ post }) {
           <motion.img style={{ y: imgY }} src={cover(post)} alt="" className="absolute inset-0 h-[115%] w-full object-cover transition-transform duration-[1.6s] ease-out group-hover:scale-105" />
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6 sm:p-12">
-            <span className="inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1 text-xs font-extrabold text-ink"><Sparkles className="h-3.5 w-3.5" />Featured story</span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1 text-xs font-extrabold text-ink"><Star className="h-3.5 w-3.5" />Featured story</span>
             <h2 className="mt-4 max-w-3xl text-3xl leading-tight font-extrabold text-white sm:text-5xl">{post.title}</h2>
             <p className="mt-3 max-w-2xl text-white/75 sm:text-lg">{post.excerpt}</p>
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-white/60">

@@ -1,6 +1,6 @@
 // Admin → Blog: write, schedule and publish posts; draft with Claude; autopilot writes posts every few days.
 import { useRef, useState } from "react";
-import { CalendarClock, Eye, FileText, Heading2, ImageIcon, Link2, List, PenLine, Plus, Rocket, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { CalendarClock, Eye, FileText, Heading2, ImageIcon, Link2, List, PenLine, Plus, Rocket, Trash2, Wand2 } from "lucide-react";
 import { useAuth, useLoad } from "../auth";
 import {
   Badge, Button, Card, ConfirmModal, DataTable, Empty, ErrorBox, Input, Loading, Modal, PageHeader, Pagination, SearchBox, Select,
@@ -117,14 +117,14 @@ function Editor({ initial, aiReady, onClose, onSaved }) {
       <div className="space-y-5">
         {ai.open ? (
           <Card className="border-violet-400/25 bg-violet-400/5">
-            <p className="mb-3 flex items-center gap-2 font-extrabold text-white"><Sparkles className="h-4 w-4 text-violet-300" />Draft with Claude</p>
+            <p className="mb-3 flex items-center gap-2 font-extrabold text-white"><Wand2 className="h-4 w-4 text-violet-300" />Draft with Claude</p>
             <div className="grid gap-3">
               <Input id="ai-topic" label="What's the post about?" placeholder="e.g. How to keep your home free of harmattan dust" value={ai.topic} onChange={(e) => setAi({ ...ai, topic: e.target.value })} />
               <TextArea id="ai-ins" label="Anything else? (optional)" rows={2} placeholder="e.g. Mention our deep cleaning service and Lekki/Ajah" value={ai.instructions} onChange={(e) => setAi({ ...ai, instructions: e.target.value })} />
               <div className="flex gap-2"><Button icon={Wand2} loading={busy} disabled={!ai.topic.trim()} onClick={draft}>Write the draft</Button><Button variant="ghost" onClick={() => setAi({ ...ai, open: false })}>Write it myself</Button></div>
             </div>
           </Card>
-        ) : aiReady && <Button size="sm" variant="secondary" icon={Sparkles} onClick={() => setAi({ ...ai, open: true })}>Draft with Claude</Button>}
+        ) : aiReady && <Button size="sm" variant="secondary" icon={Wand2} onClick={() => setAi({ ...ai, open: true })}>Draft with Claude</Button>}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input id="bp-title" label="Title *" className="sm:col-span-2" error={errors.title} value={f.title} onChange={(e) => set("title", e.target.value)} />
