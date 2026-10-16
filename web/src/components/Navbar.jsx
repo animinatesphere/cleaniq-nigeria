@@ -15,6 +15,8 @@ const LINKS = [
   { to: "/#plans", label: "Plans" },
   { to: "/#lagos", label: "Areas" },
   { to: "/#faq", label: "FAQ" },
+  { to: "/blog", label: "Blog" },
+  { to: "/contact", label: "Contact" },
 ];
 
 // White wordmark — only place it on a dark/green background.

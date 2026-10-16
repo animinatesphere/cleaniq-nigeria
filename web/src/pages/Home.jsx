@@ -11,6 +11,7 @@ import WhyUs from "../components/WhyUs";
 import Lagos from "../components/Lagos";
 import JoinTeam from "../components/JoinTeam";
 import FAQ from "../components/FAQ";
+import BlogTeaser from "../components/BlogTeaser";
 
 export default function Home() {
   return (
@@ -28,6 +29,7 @@ export default function Home() {
       <WhyUs />
       <Lagos />
       <JoinTeam />
+      <BlogTeaser />
       <FAQ />
     </>
   );

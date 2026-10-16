@@ -92,6 +92,8 @@ export default function Footer({ showCta = true }) {
               <li><Link to="/#careers" className="hover:text-mint">Join our team</Link></li>
               <li><Link to="/#lagos" className="hover:text-mint">Areas we cover</Link></li>
               <li><Link to="/#faq" className="hover:text-mint">FAQ</Link></li>
+              <li><Link to="/blog" className="hover:text-mint">Blog</Link></li>
+              <li><Link to="/contact" className="hover:text-mint">Contact us</Link></li>
             </ul>
           </div>
           <div className="col-span-2 sm:col-span-1">

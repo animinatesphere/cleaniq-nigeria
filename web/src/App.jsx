@@ -10,6 +10,9 @@ import Home from "./pages/Home";
 // Loaded only when someone opens them, so the home page stays fast.
 const Booking = lazy(() => import("./pages/Booking"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const Blog = lazy(() => import("./pages/Blog"));
+const Contact = lazy(() => import("./pages/Contact"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 import NotFound from "./pages/NotFound";
 import { EASE } from "./motion";
@@ -45,6 +48,9 @@ export default function App() {
             <Route path="/" element={<Page><Home /></Page>} />
             <Route path="/booking" element={<Page><Booking /></Page>} />
             <Route path="/payment/success" element={<Page><PaymentSuccess /></Page>} />
+            <Route path="/blog" element={<Page><Blog /></Page>} />
+            <Route path="/contact" element={<Page><Contact /></Page>} />
+            <Route path="/blog/:slug" element={<Page><BlogPost /></Page>} />
             <Route path="*" element={<Page><NotFound /></Page>} />
           
           </Routes>
